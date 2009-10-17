@@ -12,7 +12,7 @@ namespace Relax.Test
     {
         public static Connection CreateConnection()
         {
-            return new Connection { Location = new Uri("http://localhost:81") };    
+            return new Connection { Location = new Uri("http://localhost:5984") };    
         }
 
         [TestFixtureSetUp]
@@ -37,7 +37,7 @@ namespace Relax.Test
         {
             var c = CreateConnection();
             Assert.AreEqual(
-                "http://localhost:81/forward%2Fslash/",
+                "http://localhost:5984/forward%2Fslash/",
                 CreateConnection().GetDatabaseLocation("forward/slash")
             );
         }
