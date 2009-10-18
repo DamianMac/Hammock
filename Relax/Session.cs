@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Relax.Design;
 
 namespace Relax
 {
@@ -20,7 +21,9 @@ namespace Relax
             get
             {
                 return Session.Connection.GetDatabaseLocation(Session.Database) +
-                       Id.Replace("/", "%2F");
+                    (Id.StartsWith("_design/")
+                        ? "_design/" + Id.Substring(8).Replace("/", "%2F")
+                        : Id.Replace("/", "%2F"));
             }
         }
 
@@ -90,17 +93,33 @@ namespace Relax
                 return a;
             }
         }
+        
+        public Document Save<TDocument>(TDocument document, string id) where TDocument : class
+        {
+            if (_entities.ContainsKey(document))
+            {
+                throw new Exception("This overload cannot be used to save existing documents.");
+            }
 
+            return Save(document, new Document {Session = this, Id = id});
+        }
+            
         public Document Save<TDocument>(TDocument document) where TDocument : class
         {
             var d = _entities.ContainsKey(document)
                 ? _entities[document]
                 : new Document
-                      {
-                          Session = this,
-                          Id = typeof(TDocument).Name.ToLowerInvariant() + "-" + Guid.NewGuid(),
-                          Revision = null,
-                      };
+                {
+                    Session = this,
+                    Id = typeof(TDocument).Name.ToLowerInvariant() + "-" + Guid.NewGuid(),
+                    Revision = null,
+                };
+            
+            return Save(document, d);
+        }
+
+        private Document Save<TDocument>(TDocument document, Document d) where TDocument : class
+        {
             var serializer = new JsonSerializer(); 
             var request = (HttpWebRequest) WebRequest.Create(d.Location);
             request.Method = "PUT";

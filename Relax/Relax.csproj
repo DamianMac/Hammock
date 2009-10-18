@@ -44,8 +44,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Connection.cs" />
+    <Compile Include="Design\DesignDocument.cs" />
+    <Compile Include="Design\View.cs" />
     <Compile Include="InvalidDatabaseNameException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Query.cs" />
     <Compile Include="Repository.cs" />
     <Compile Include="Session.cs" />
   </ItemGroup>

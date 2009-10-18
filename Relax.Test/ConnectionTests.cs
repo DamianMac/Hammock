@@ -59,6 +59,12 @@ namespace Relax.Test
         [Test]
         public void Connection_can_delete_database()
         {
+            // give a very short pause here, as there are some file locking issues
+            // in windows where the delete goes through before a previous file lock
+            // is released.
+            // http://issues.apache.org/jira/browse/COUCHDB-326
+            System.Threading.Thread.Sleep(100);
+
             var c = CreateConnection();
             c.DeleteDatabase("relax-can-delete-database");
             Assert.IsFalse(c.ListDatabases().Contains("relax-can-delete-database"));

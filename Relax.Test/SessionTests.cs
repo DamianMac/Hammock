@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 
 using NUnit.Framework;
+using Relax.Design;
 
 namespace Relax.Test
 {
@@ -45,7 +46,7 @@ namespace Relax.Test
         [TestFixtureTearDown]
         public void __teardown()
         {
-            _cx.DeleteDatabase("relax-session-tests");
+            //_cx.DeleteDatabase("relax-session-tests");
         }
 
         [Test]
@@ -111,6 +112,41 @@ namespace Relax.Test
         {
             var w = _sx.Load<Widget>(_doc.Id);
             var whoops = _sx.Load<Doodad>(_doc.Id);
+        }
+
+        [Test]
+        public void Session_can_save_design_document()
+        {
+            var d = new DesignDocument { Language = "javascript" };
+            _sx.Save(d, "_design/foo");
+            Assert.True(_sx.List().Any(x => x.Id == "_design/foo"));
+        }
+
+        [Test]
+        public void Session_can_load_design_document()
+        {
+            _cx.CreateSession(_sx.Database).Save(
+                new DesignDocument { Language = "javascript", },
+                "_design/bar"
+            );
+
+            var d = _sx.Load<DesignDocument>("_design/bar");
+
+            Assert.IsNotNull(d);
+        }
+
+        [Test]
+        public void Session_can_delete_design_document()
+        {
+            _cx.CreateSession(_sx.Database).Save(
+                new DesignDocument { Language = "javascript", },
+                "_design/baz"
+            );
+
+            var d = _sx.Load<DesignDocument>("_design/baz");
+            _sx.Delete(d);
+
+            Assert.IsFalse(_sx.List().Any(x => x.Id == "_design/baz"));
         }
     }
 }
