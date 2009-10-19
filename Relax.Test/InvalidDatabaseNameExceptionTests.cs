@@ -11,38 +11,38 @@ namespace Relax.Test
     public class InvalidDatabaseNameExceptionTests
     {
         [Test]
-        [ExpectedException(ExpectedException = typeof(InvalidDatabaseNameException))]
         public void Name_must_not_contain_uppercase()
         {
-            InvalidDatabaseNameException.Validate("asdfASDF");    
+            Assert.Throws<InvalidDatabaseNameException>(() => 
+                InvalidDatabaseNameException.Validate("asdfASDF"));    
         }       
         
         [Test]
-        [ExpectedException(ExpectedException = typeof(ArgumentNullException))]
         public void Name_must_not_be_null()
         {
-            InvalidDatabaseNameException.Validate(null);    
+            Assert.Throws<ArgumentNullException>(() => 
+                InvalidDatabaseNameException.Validate(null));    
         }
        
         [Test]
-        [ExpectedException(ExpectedException = typeof(InvalidDatabaseNameException))]
         public void Name_must_not_be_empty()
         {
-            InvalidDatabaseNameException.Validate(string.Empty);    
+            Assert.Throws<InvalidDatabaseNameException>(() =>
+                InvalidDatabaseNameException.Validate(string.Empty));    
         }
 
         [Test]
-        [ExpectedException(ExpectedException = typeof(InvalidDatabaseNameException))]
         public void Name_must_not_contain_invalid_symbols()
         {
-            InvalidDatabaseNameException.Validate("asdf!@#$%^&*()");    
+            Assert.Throws<InvalidDatabaseNameException>(() =>
+                InvalidDatabaseNameException.Validate("asdf!@#$%^&*()"));    
         }
 
         [Test]
-        [ExpectedException(ExpectedException = typeof(InvalidDatabaseNameException))]
         public void Name_must_start_with_alphas()
         {
-            InvalidDatabaseNameException.Validate("1234asdf");
+            Assert.Throws<InvalidDatabaseNameException>(() =>
+                InvalidDatabaseNameException.Validate("1234asdf"));
         }
 
         [Test]

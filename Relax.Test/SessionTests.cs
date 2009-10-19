@@ -107,11 +107,11 @@ namespace Relax.Test
         }
 
         [Test]
-        [ExpectedException(typeof(InvalidCastException))]
         public void Cannot_load_document_with_wrong_generic_argument()
         {
             var w = _sx.Load<Widget>(_doc.Id);
-            var whoops = _sx.Load<Doodad>(_doc.Id);
+
+            Assert.Throws<InvalidCastException>(() => _sx.Load<Doodad>(_doc.Id));
         }
 
         [Test]
