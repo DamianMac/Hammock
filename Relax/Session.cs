@@ -211,5 +211,26 @@ namespace Relax
                 }
             }
         }
+
+        public bool Contains(string id)
+        {
+            foreach (var p in _entities)
+            {
+                if (p.Value.Id == id)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void Enroll<TDocument>(Document d, TDocument document) where TDocument : class
+        {
+            if (Contains(d.Id))
+            {
+                throw new Exception("A document with this key is already enrolled.");
+            }
+            _entities.Add(document, d);
+        }
     }
 }

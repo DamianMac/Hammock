@@ -66,10 +66,10 @@ namespace Relax.Test
         [Test]
         public void Can_execute_query_with_keys_and_values()
         {
-            var q = new Query<Widget>(_sx, "widgets", "all-manufacturers");
+            var q = new Query<Widget>(_sx, "widgets", "all-manufacturers", true);
             var r = q.Execute();
 
-            Assert.AreEqual(r.Total, 3);
+            Assert.AreEqual(2, r.Total);
             Assert.IsNotNull(r.Rows[0].Key);
             Assert.IsNotNull(r.Rows[1].Value);
         }
@@ -77,8 +77,67 @@ namespace Relax.Test
         [Test]
         public void Can_execute_query_with_result_limit()
         {
+            var q = new Query<Widget>(_sx, "widgets", "all-widgets");
+            var r = q.Execute(2);
+
+            Assert.AreEqual(r.Total, 3);
+            Assert.AreEqual(r.Rows.Length, 2);
+        } 
+
+        [Test]
+        public void Can_page_through_results()
+        {
+            var q = new Query<Widget>(_sx, "widgets", "all-widgets");
             
+            var r = q.Execute(2);
+            Assert.AreEqual(3, r.Total);
+            Assert.AreEqual(2, r.Rows.Length);
+
+            r = r.Next();
+            Assert.AreEqual(3, r.Total);
+            Assert.AreEqual(1, r.Rows.Length);
+
+            r = r.Next();
+            Assert.IsNull(r);
         }
 
+        [Test]
+        public void Can_load_through_id()
+        {
+            var q = new Query<Widget>(_sx, "widgets", "all-widgets");
+            var r = q.Execute(1);
+            var o = r.Rows.First().Entity;
+
+            Assert.IsNotNull(o);
+        }
+
+        [Test]
+        public void Can_prefetch_documents_and_enroll_doc()
+        {
+            var q = new Query<Widget>(_sx, "widgets", "all-widgets");
+
+            var r0 = q.Execute(new QueryPage { include_docs = true, limit = 1 });
+            var e0 = r0.Rows.First().Entity;
+
+            var e1 = _sx.Load<Widget>(r0.Rows.First().Id);
+
+            Assert.IsNotNull(e0);
+            Assert.AreSame(e0, e1);
+        }
+
+        [Test]
+        public void Can_prefetch_documents_where_doc_is_already_enrolled()
+        {
+            var q = new Query<Widget>(_sx, "widgets", "all-widgets");
+
+            var r0 = q.Execute(1);
+            var e0 = _sx.Load<Widget>(r0.Rows.First().Id);
+            
+            var r1 = q.Execute(new QueryPage {include_docs = true, limit=1});
+            var e1 = r1.Rows.First().Entity;
+
+            Assert.IsNotNull(e1);
+            Assert.AreSame(e0, e1);
+        }
     }
 }
