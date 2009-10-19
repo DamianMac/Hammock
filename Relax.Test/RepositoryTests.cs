@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
+using Relax.Design;
 
 namespace Relax.Test
 {
@@ -70,6 +71,55 @@ namespace Relax.Test
             var doc = r.Save(w);
 
             Assert.IsTrue(_sx.List().Any(x => x.Id == doc.Id));
+        }
+
+        [Test]
+        public void Repository_can_create_queries_from_design()
+        {
+            var design = new DesignDocument
+            {
+                Language = "javascript",
+                Views = new Dictionary<string, View>
+                         {
+                            { "all-widgets", new View {
+                                Map = @"function(doc) { emit(null, null); }"
+                            }},
+                            { "all-manufacturers", new View() {
+                                Map = @"function(doc) { emit(doc.Manufacturer, 1); }",
+                                Reduce = @"function(keys, values, rereduce) { return sum(values); }"
+                            }}
+                         }
+            };
+            var r = new Repository<Widget>(_sx, design);
+
+            Assert.IsNotNull(r.Queries["all-widgets"]);
+            Assert.IsNotNull(r.Queries["all-manufacturers"]);
+            Assert.AreEqual("widget", r.Queries["all-manufacturers"].Design);
+            Assert.IsTrue(r.Queries["all-manufacturers"].Group);
+        }
+
+        [Test]
+        public void Repository_loads_design_document_from_session()
+        {
+            var design = new DesignDocument
+            {
+                Language = "javascript",
+                Views = new Dictionary<string, View>
+                         {
+                            { "all-widgets", new View {
+                                Map = @"function(doc) { emit(null, null); }"
+                            }},
+                            { "all-manufacturers", new View() {
+                                Map = @"function(doc) { emit(doc.Manufacturer, 1); }",
+                                Reduce = @"function(keys, values, rereduce) { return sum(values); }"
+                            }}
+                         }
+            };
+
+            _sx.Save(design, "_design/widget");
+
+            var r = new Repository<Widget>(_sx);
+            Assert.AreEqual(2, r.Queries.Count);
         }
     }
 }
