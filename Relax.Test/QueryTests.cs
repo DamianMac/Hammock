@@ -58,7 +58,7 @@ namespace Relax.Test
         public void Can_execute_query()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
-            var r = q.Execute();
+            var r = q.All().Execute();
 
             Assert.AreEqual(r.Total, 3);
         }
@@ -67,7 +67,7 @@ namespace Relax.Test
         public void Can_execute_query_with_keys_and_values()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-manufacturers", true);
-            var r = q.Execute();
+            var r = q.All().Execute();
 
             Assert.AreEqual(2, r.Total);
             Assert.IsNotNull(r.Rows[0].Key);
@@ -78,7 +78,7 @@ namespace Relax.Test
         public void Can_execute_query_with_result_limit()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
-            var r = q.Execute(2);
+            var r = q.Limit(2).Execute();
 
             Assert.AreEqual(r.Total, 3);
             Assert.AreEqual(r.Rows.Length, 2);
@@ -89,7 +89,7 @@ namespace Relax.Test
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
             
-            var r = q.Execute(2);
+            var r = q.Limit(2).Execute();
             Assert.AreEqual(3, r.Total);
             Assert.AreEqual(2, r.Rows.Length);
 
@@ -105,7 +105,7 @@ namespace Relax.Test
         public void Can_load_through_id()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
-            var r = q.Execute(1);
+            var r = q.Limit(1).Execute();
             var o = r.Rows.First().Entity;
 
             Assert.IsNotNull(o);
@@ -116,7 +116,7 @@ namespace Relax.Test
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
 
-            var r0 = q.Execute(new QueryPage { include_docs = true, limit = 1 });
+            var r0 = q.Limit(1).WithDocuments().Execute();
             var e0 = r0.Rows.First().Entity;
 
             var e1 = _sx.Load<Widget>(r0.Rows.First().Id);
@@ -130,10 +130,10 @@ namespace Relax.Test
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
 
-            var r0 = q.Execute(1);
+            var r0 = q.Limit(1).Execute();
             var e0 = _sx.Load<Widget>(r0.Rows.First().Id);
             
-            var r1 = q.Execute(new QueryPage {include_docs = true, limit=1});
+            var r1 = q.Limit(1).WithDocuments().Execute();
             var e1 = r1.Rows.First().Entity;
 
             Assert.IsNotNull(e1);
