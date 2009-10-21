@@ -64,7 +64,6 @@ namespace Relax
         public Connection Connection { get; private set; }
         public string Database { get; private set; }
 
-        //private Dictionary<Document, object> _documents = new Dictionary<Document, object>(100);
         private Dictionary<object, Document> _entities = new Dictionary<object, Document>(100);
 
         public Session(Connection connection, string database)
@@ -231,6 +230,16 @@ namespace Relax
                 throw new Exception("A document with this key is already enrolled.");
             }
             _entities.Add(document, d);
+        }
+
+        public void Reset()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IDisposable Lock()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -62,6 +62,8 @@ namespace Relax
         public Uri Location { get; set; }
         public string Version { get; set; }
 
+        private Dictionary<string, List<Session>> _sessions = new Dictionary<string, List<Session>>();
+
         public string GetDatabaseLocation(string database)
         {
             InvalidDatabaseNameException.Validate(database);
@@ -96,7 +98,38 @@ namespace Relax
 
         public Session CreateSession(string database)
         {
+            lock (_sessions)
+            {
+                if (_sessions.ContainsKey(database) &&
+                    _sessions[database].Count > 0)
+                {
+                    var s = _sessions[database][0];
+                    _sessions[database].RemoveAt(0);
+                    return s;
+                }
+            }
             return new Session(this, database);
+        }
+
+        public void ReturnSession(Session sx)
+        {
+            if (sx.Connection != this)
+            {
+                throw new ArgumentException("The Session being returned was not created by this connection. Please using the session Lock() api to manage Session lifecycle.");
+            }
+            lock (_sessions)
+            {
+                if (!_sessions.ContainsKey(sx.Database))
+                {
+                    _sessions[sx.Database] = new List<Session>();
+                }
+                if (_sessions[sx.Database].Contains(sx))
+                {
+                    throw new InvalidOperationException("The Session has already been returned the Session Pool. This is an indication that your Lock() usage is incorrect.");
+                }
+                _sessions[sx.Database].Add(sx);
+                sx.Reset();
+            }
         }
     }
 }

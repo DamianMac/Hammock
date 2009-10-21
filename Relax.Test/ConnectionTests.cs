@@ -79,5 +79,15 @@ namespace Relax.Test
             Assert.AreSame(c, s.Connection);
             Assert.AreEqual("relax-can-create-session", s.Database);
         }
+
+        [Test]
+        public void Conection_can_reuse_session()
+        {
+            var c = CreateConnection();
+            var s = c.CreateSession("relax-can-create-session");
+            c.ReturnSession(s);
+            var s2 = c.CreateSession("relax-can-create-session");
+            Assert.That(s2, Is.SameAs(s));
+        }
     }
 }
