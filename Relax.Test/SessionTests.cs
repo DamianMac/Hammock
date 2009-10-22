@@ -148,5 +148,43 @@ namespace Relax.Test
 
             Assert.IsFalse(_sx.List().Any(x => x.Id == "_design/baz"));
         }
+
+        [Test]
+        public void Session_can_be_reset()
+        {
+            var s = _cx.CreateSession(_sx.Database);
+            var w = new Widget {Name = "wingnut"};
+            s.Save(w);
+            s.Reset();
+            Assert.That(() => s.Delete(w), Throws.InstanceOf<Exception>());
+        }
+
+        [Test]
+        public void Session_preserves_design_document_when_reset()
+        {
+            var s = _cx.CreateSession(_sx.Database);
+            var d = new DesignDocument {Language = "javascript"};
+            s.Save(d, "_design/bang");
+            s.Reset();
+            var e = s.Load<DesignDocument>("_design/bang");
+            Assert.That(e, Is.SameAs(d));
+        }
+
+        [Test]
+        public void Session_returns_itself_to_connection_when_all_locks_disposed()
+        {
+            var s = _cx.CreateSession(_sx.Database);
+            using (s.Lock())
+            {
+                using (s.Lock())
+                {
+                }
+                var t = _cx.CreateSession(_sx.Database);
+                Assert.That(t, Is.Not.SameAs(s));
+            }
+            var u = _cx.CreateSession(_sx.Database);
+            Assert.That(u, Is.SameAs(s));
+        }
+
     }
 }

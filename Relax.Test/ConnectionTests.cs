@@ -87,6 +87,7 @@ namespace Relax.Test
             var s = c.CreateSession("relax-can-create-session");
             c.ReturnSession(s);
             var s2 = c.CreateSession("relax-can-create-session");
+            
             Assert.That(s2, Is.SameAs(s));
         }
     }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Relax.Design;
@@ -64,6 +65,7 @@ namespace Relax
         public Connection Connection { get; private set; }
         public string Database { get; private set; }
 
+        private int _locks;
         private Dictionary<object, Document> _entities = new Dictionary<object, Document>(100);
 
         public Session(Connection connection, string database)
@@ -234,12 +236,39 @@ namespace Relax
 
         public void Reset()
         {
-            throw new NotImplementedException();
+            _entities = _entities.Where(x => x.Value.Id.StartsWith("_design/")).ToDictionary(x => x.Key, x => x.Value);
+        }
+
+        private class __SessionLock : IDisposable
+        {
+            private Session _sx;
+
+            public __SessionLock(Session sx)
+            {
+                _sx = sx;
+            }
+
+            public void Dispose()
+            {
+                _sx.Release();
+            }
         }
 
         public IDisposable Lock()
         {
-            throw new NotImplementedException();
+            Interlocked.Increment(ref _locks);
+            return new __SessionLock(this);
+        }
+
+        private void Release()
+        {
+            // TODO: guard all usage so that the session is unusable after it has been returned the connection
+
+            var l = Interlocked.Decrement(ref _locks);
+            if (l < 1)
+            {
+                Connection.ReturnSession(this);
+            }
         }
     }
 }
