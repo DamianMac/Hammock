@@ -95,31 +95,31 @@ namespace Relax
             }
         }
         
-        public Document Save<TDocument>(TDocument document, string id) where TDocument : class
+        public Document Save<TEntity>(TEntity entity, string id) where TEntity : class
         {
-            if (_entities.ContainsKey(document))
+            if (_entities.ContainsKey(entity))
             {
                 throw new Exception("This overload cannot be used to save existing documents.");
             }
 
-            return Save(document, new Document {Session = this, Id = id});
+            return Save(entity, new Document {Session = this, Id = id});
         }
             
-        public Document Save<TDocument>(TDocument document) where TDocument : class
+        public Document Save<TEntity>(TEntity entity) where TEntity : class
         {
-            var d = _entities.ContainsKey(document)
-                ? _entities[document]
+            var d = _entities.ContainsKey(entity)
+                ? _entities[entity]
                 : new Document
                 {
                     Session = this,
-                    Id = typeof(TDocument).Name.ToLowerInvariant() + "-" + Guid.NewGuid(),
+                    Id = typeof(TEntity).Name.ToLowerInvariant() + "-" + Guid.NewGuid(),
                     Revision = null,
                 };
             
-            return Save(document, d);
+            return Save(entity, d);
         }
 
-        private Document Save<TDocument>(TDocument document, Document d) where TDocument : class
+        private Document Save<TEntity>(TEntity entity, Document d) where TEntity : class
         {
             var serializer = new JsonSerializer(); 
             var request = (HttpWebRequest) WebRequest.Create(d.Location);
@@ -129,7 +129,7 @@ namespace Relax
                 if (!String.IsNullOrEmpty(d.Revision))
                 {
                     var jwriter = new JTokenWriter();
-                    serializer.Serialize(jwriter, document);
+                    serializer.Serialize(jwriter, entity);
                     var o = jwriter.Token;
                     o.First.AddBeforeSelf(new JProperty("_rev", d.Revision));
                     o.First.AddBeforeSelf(new JProperty("_id", d.Id));
@@ -137,7 +137,7 @@ namespace Relax
                 }
                 else
                 {
-                    serializer.Serialize(writer, document);
+                    serializer.Serialize(writer, entity);
                 }
             }
             using (var reader = request.GetCouchResponse())
@@ -146,27 +146,27 @@ namespace Relax
                 d = response.ToDocument(this);
             }
     
-            if (_entities.ContainsKey(document))
+            if (_entities.ContainsKey(entity))
             {
-                _entities.Remove(document);
+                _entities.Remove(entity);
             }
-            _entities.Add(document, d);
+            _entities.Add(entity, d);
 
             return d;
         }
 
-        public TDocument Load<TDocument>(string id) where TDocument : class
+        public TEntity Load<TEntity>(string id) where TEntity : class
         {
             foreach (var p in _entities)
             {
                 if (p.Value.Id == id)
                 {
-                    var doc = p.Key as TDocument;
-                    if (null == doc)
+                    var e = p.Key as TEntity;
+                    if (null == e)
                     {
                         throw new InvalidCastException();
                     }
-                    return doc;
+                    return e;
                 }
             }
 
@@ -182,29 +182,29 @@ namespace Relax
                 d.Id = (string)o["_id"];
                 d.Revision = (string) o["_rev"];
                 var serializer = new JsonSerializer();
-                var response = (TDocument)serializer.Deserialize(new JTokenReader(o), typeof(TDocument));
-                _entities[response] = d;
-                return response;
+                var e = (TEntity)serializer.Deserialize(new JTokenReader(o), typeof(TEntity));
+                _entities[e] = d;
+                return e;
             }
         }
 
-        public void Delete<TDocument>(TDocument document) where TDocument : class
+        public void Delete<TEntity>(TEntity entity) where TEntity : class
         {
-            if (!_entities.ContainsKey(document))
+            if (!_entities.ContainsKey(entity))
             {
-                throw new IndexOutOfRangeException("The document is not currently enrolled in this session.");
+                throw new IndexOutOfRangeException("The entity is not currently enrolled in this session.");
             }
-            var d = _entities[document];
-            var request = (HttpWebRequest)WebRequest.Create(d.Location);
+            var e = _entities[entity];
+            var request = (HttpWebRequest)WebRequest.Create(e.Location);
             request.Method = "DELETE";
-            request.Headers[HttpRequestHeader.IfMatch] = d.Revision;
+            request.Headers[HttpRequestHeader.IfMatch] = e.Revision;
             using (var reader = request.GetCouchResponse())
             {
                 var serializer = new JsonSerializer();
                 var response = (__DocumentResponse)serializer.Deserialize(reader, typeof(__DocumentResponse));
                 if (response.ok)
                 {
-                    _entities.Remove(document);
+                    _entities.Remove(entity);
                 }
                 else
                 {
@@ -213,7 +213,7 @@ namespace Relax
             }
         }
 
-        public bool Contains(string id)
+        public bool IsEnrolled(string id)
         {
             foreach (var p in _entities)
             {
@@ -225,13 +225,18 @@ namespace Relax
             return false;
         }
 
-        public void Enroll<TDocument>(Document d, TDocument document) where TDocument : class
+        public bool IsEnrolled<TEntity>(TEntity entity) where TEntity : class
         {
-            if (Contains(d.Id))
+            return _entities.ContainsKey(entity);
+        }
+
+        public void Enroll<TEntity>(Document d, TEntity entity) where TEntity : class
+        {
+            if (IsEnrolled(d.Id))
             {
-                throw new Exception("A document with this key is already enrolled.");
+                throw new Exception("A entity with this key is already enrolled.");
             }
-            _entities.Add(document, d);
+            _entities.Add(entity, d);
         }
 
         public void Reset()
@@ -262,8 +267,6 @@ namespace Relax
 
         private void Release()
         {
-            // TODO: guard all usage so that the session is unusable after it has been returned the connection
-
             var l = Interlocked.Decrement(ref _locks);
             if (l < 1)
             {

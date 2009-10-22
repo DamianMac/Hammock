@@ -15,7 +15,7 @@ namespace Relax
             {
                 private Query<TEntity> Query { get; set; }
 
-                private JToken _doc;
+                private JToken _data;
                 private TEntity _entity;
 
                 internal Row(Query<TEntity> q, JToken o)
@@ -24,7 +24,7 @@ namespace Relax
                     Id = (string)o["id"];
                     Key = o["key"];
                     Value = o["value"];
-                    _doc = o["doc"];
+                    _data = o["doc"];
                 }
 
                 public string Id { get; set; }
@@ -37,7 +37,7 @@ namespace Relax
                     {
                         // no id means no way to load a doc (reduce)
                         if (String.IsNullOrEmpty(Id)) return null;
-                        if (null == _doc)
+                        if (null == _data)
                         {
                             // no inline doc means we just do a simple pull from the session
                             _entity = Query.Session.Load<TEntity>(Id);
@@ -52,17 +52,17 @@ namespace Relax
                                 var d = new Document
                                   {
                                       Session = Query.Session,
-                                      Id = (string) _doc["_id"],
-                                      Revision = (string) _doc["_rev"]
+                                      Id = (string) _data["_id"],
+                                      Revision = (string) _data["_rev"]
                                   };
-                                if (Query.Session.Contains(d.Id))
+                                if (Query.Session.IsEnrolled(d.Id))
                                 {
                                     _entity = Query.Session.Load<TEntity>(d.Id);
                                 }
                                 else
                                 {
                                     var serializer = new JsonSerializer();
-                                    _entity = (TEntity) serializer.Deserialize(new JTokenReader(_doc), typeof (TEntity));
+                                    _entity = (TEntity) serializer.Deserialize(new JTokenReader(_data), typeof (TEntity));
                                     Query.Session.Enroll(d, _entity);
                                 }
                             }
@@ -236,9 +236,14 @@ namespace Relax
             public Spec Next()
             {
                 // TODO: implement key+docid paging: http://wiki.apache.org/couchdb/How_to_page_through_results
+
                 // Since emit() will write multiple rows with the same key+docid, I don't see
                 // how you can make any claim that this pagination method works. This holds
                 // especially true in this case, where we are a framework library.
+
+                // Perhaps a map() method that outputs rows like that is just such bad practice that we can
+                // allow pagination to fail if someone tries it? Holding off on a decision until I have
+                // some better evidence and more real experience with views.
 
                 var page = (Spec)MemberwiseClone();
                 page._skip = (page._skip ?? 0) + (page._limit ?? 10);

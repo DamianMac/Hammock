@@ -57,7 +57,7 @@ namespace Relax.Test
         }
 
         [Test]
-        public void Can_create_document()
+        public void Can_create_entity()
         {
             var w = new Widget {Name = "sproket", Tags = new[] {"big", "small"}};
             var doc = _sx.Save(w);
@@ -65,7 +65,7 @@ namespace Relax.Test
         }
 
         [Test]
-        public void Can_delete_document()
+        public void Can_delete_entity()
         {
             var w = new Widget { Name = "sproket", Tags = new[] { "big", "small" } };
             var doc = _sx.Save(w);
@@ -74,7 +74,7 @@ namespace Relax.Test
         }
 
         [Test]
-        public void Can_update_document_after_creating_it()
+        public void Can_update_entity_after_creating_it()
         {
             var w = new Widget { Name = "sproket", Tags = new[] { "big", "small" } };
             var doc = _sx.Save(w);
@@ -84,14 +84,14 @@ namespace Relax.Test
         }
         
         [Test]
-        public void Can_load_document()
+        public void Can_load_entity()
         {
             var w = _sx.Load<Widget>(_doc.Id);
             Assert.AreEqual("gizmo", w.Name);
         }
 
         [Test]
-        public void Can_update_loaded_document()
+        public void Can_update_loaded_entity()
         {
             var x = _sx.List();
             var w = _sx.Load<Widget>(_doc.Id);
@@ -107,7 +107,7 @@ namespace Relax.Test
         }
 
         [Test]
-        public void Cannot_load_document_with_wrong_generic_argument()
+        public void Cannot_load_entity_with_wrong_generic_argument()
         {
             var w = _sx.Load<Widget>(_doc.Id);
 
