@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using Relax.Design;
 
@@ -12,8 +13,8 @@ namespace Relax.Test
     {
         public class Widget
         {
-            public string Name { get; set; }
-            public string Manufacturer { get; set; }
+            [JsonProperty("name")] public string Name { get; set; }
+            [JsonProperty("mfg")] public string Manufacturer { get; set; }
             public decimal Cost { get; set; }
         }
 
@@ -120,6 +121,25 @@ namespace Relax.Test
 
             var r = new Repository<Widget>(_sx);
             Assert.AreEqual(2, r.Queries.Count);
+        }
+
+        [Test]
+        public void Repository_can_generate_views()
+        {
+            var r = new Repository<Widget>(_sx);
+            var z = r.Where(x => x.Name).Eq("gadget")
+                       .And(x => x.Cost).Bw(10, 20)
+                       .List();
+        }
+
+        [Test]
+        public void Fields_must_appear_only_once_in_a_generated_view()
+        {
+            var r = new Repository<Widget>(_sx);
+            Assert.Throws<ArgumentException>(() =>
+                r.Where(x => x.Name).Eq("gadget")
+                   .And(x => x.Cost).Ge(10)
+                   .And(x => x.Cost).Le(20));
         }
     }
 }

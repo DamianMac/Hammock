@@ -13,9 +13,10 @@ namespace Relax
         void Delete(TEntity entity);
     }
 
-    public class Repository<TEntity> : IRepository<TEntity> where TEntity : class
+    public partial class Repository<TEntity> : IRepository<TEntity> where TEntity : class
     {
         public Session Session { get; private set; }
+        public DesignDocument Design { get; private set; }
 
         public IDictionary<string, Query<TEntity>> Queries { get; private set; }
 
@@ -34,13 +35,12 @@ namespace Relax
             Queries = new Dictionary<string, Query<TEntity>>();
             Session = sx;
 
-            if (null == design)
+            Design = design;
+            if (null == Design)
             {
                 try
                 {
-                    // TODO: add special handling for session to cache this,
-                    // will be very slow to ask every single time
-                    design = Session.Load<DesignDocument>("_design/" + typeof (TEntity).Name.ToLowerInvariant());
+                    Design = Session.Load<DesignDocument>(GetDesignDocumentName());
                 }
                 catch 
                 {
@@ -62,6 +62,11 @@ namespace Relax
                     ));
                 }
             }
+        }
+
+        private string GetDesignDocumentName()
+        {
+            return "_design/" + typeof (TEntity).Name.ToLowerInvariant();
         }
 
         public TEntity Get(string id)
