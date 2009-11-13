@@ -44,27 +44,20 @@ namespace Relax
                 }
                 catch 
                 {
-                    // its not a fault to not have a design document
+                    Design = new DesignDocument();
+                    Design.Language = "javascript";
+                    Design.Views = new Dictionary<string, View>();
+                    Session.Save(Design, GetDesignDocumentName());
                 }
             }
 
-            if (null != design)
+            foreach (var v in Design.Views)
             {
-                foreach (var v in design.Views)
-                {
-                    Queries.Add(
-                        v.Key,
-                        new Query<TEntity>(
-                            Session,
-                            typeof(TEntity).Name.ToLowerInvariant(),
-                            v.Key,
-                            !String.IsNullOrEmpty(v.Value.Reduce)  
-                    ));
-                }
+                CreateQuery(v.Key, v.Value);
             }
         }
 
-        private string GetDesignDocumentName()
+        private static string GetDesignDocumentName()
         {
             return "_design/" + typeof (TEntity).Name.ToLowerInvariant();
         }

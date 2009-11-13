@@ -18,6 +18,18 @@ namespace Relax.Test
             public decimal Cost { get; set; }
         }
 
+        public class Gizmo
+        {
+            public string Name { get; set; }
+            public string Manufacturer { get; set; }
+            public decimal Cost { get; set; }
+        }
+
+        public class Wingding
+        {
+            
+        }
+
         private Connection _cx;
         private Session _sx;
         private Session _sx2;
@@ -33,6 +45,13 @@ namespace Relax.Test
             _cx.CreateDatabase("relax-repository-tests");
             _sx = _cx.CreateSession("relax-repository-tests");
             _sx2 = _cx.CreateSession("relax-repository-tests");
+
+            _sx.Save(new Gizmo { Name = "Gadget", Cost = 30, Manufacturer = "ACME" });
+            _sx.Save(new Gizmo { Name = "Foo",    Cost = 35, Manufacturer = "ACME" });
+            _sx.Save(new Gizmo { Name = "Bar",    Cost = 35, Manufacturer = "Widgetco" });
+            _sx.Save(new Gizmo { Name = "Biz",    Cost = 45, Manufacturer = "Widgetco" });
+            _sx.Save(new Gizmo { Name = "Bang",   Cost = 55, Manufacturer = "Widgetco" });
+
         }
 
         [Test]
@@ -102,25 +121,39 @@ namespace Relax.Test
         [Test]
         public void Repository_loads_design_document_from_session()
         {
-            var design = new DesignDocument
+            DesignDocument design = null;
+            if (_sx.IsEnrolled("_design/widget"))
             {
-                Language = "javascript",
-                Views = new Dictionary<string, View>
-                         {
-                            { "all-widgets", new View {
-                                Map = @"function(doc) { emit(null, null); }"
-                            }},
-                            { "all-manufacturers", new View() {
-                                Map = @"function(doc) { emit(doc.Manufacturer, 1); }",
-                                Reduce = @"function(keys, values, rereduce) { return sum(values); }"
-                            }}
-                         }
-            };
-
+                design = _sx.Load<DesignDocument>("_design/widget");
+            }
+            else
+            {
+                design = new DesignDocument
+                 {
+                     Language = "javascript", 
+                 };
+            }
+            design.Views = new Dictionary<string, View>
+             {
+                { "all-widgets", new View {
+                    Map = @"function(doc) { emit(null, null); }"
+                }},
+                { "all-manufacturers", new View() {
+                    Map = @"function(doc) { emit(doc.Manufacturer, 1); }",
+                    Reduce = @"function(keys, values, rereduce) { return sum(values); }"
+                }}
+             };
             _sx.Save(design, "_design/widget");
 
             var r = new Repository<Widget>(_sx);
             Assert.AreEqual(2, r.Queries.Count);
+        }
+
+        [Test]
+        public void Repository_creates_design_document_if_not_found()
+        {
+            var r = new Repository<Wingding>(_sx);
+            Assert.That(_sx.IsEnrolled("_design/wingding"));
         }
 
         [Test]
@@ -130,6 +163,10 @@ namespace Relax.Test
             var z = r.Where(x => x.Name).Eq("gadget")
                        .And(x => x.Cost).Bw(10, 20)
                        .List();
+            Assert.That(
+                _sx.Load<DesignDocument>("_design/widget").Views.ContainsKey(
+                "by-name-cost"
+            ));
         }
 
         [Test]
@@ -141,5 +178,39 @@ namespace Relax.Test
                    .And(x => x.Cost).Ge(10)
                    .And(x => x.Cost).Le(20));
         }
+
+        [Test]
+        public void Repository_can_query_by_equality()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            var z = r.Where(x => x.Manufacturer).Eq("Widgetco").List();
+            Assert.That(z.Rows.Length, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Repository_can_query_by_greater_than_or_equal_to()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            var z = r.Where(x => x.Cost).Ge(35).List();
+            Assert.That(z.Rows.Length, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void Repository_can_query_by_less_than_or_equal_to()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            var z = r.Where(x => x.Cost).Le(35).List();
+            Assert.That(z.Rows.Length, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Repository_can_query_by_between()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            var z = r.Where(x => x.Cost).Bw(35, 45).List();
+            Assert.That(z.Rows.Length, Is.EqualTo(3));
+        }
+
+
     }
 }

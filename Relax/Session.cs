@@ -99,9 +99,13 @@ namespace Relax
         {
             if (_entities.ContainsKey(entity))
             {
-                throw new Exception("This overload cannot be used to save existing documents.");
+                var d = _entities[entity];
+                if (d.Id != id)
+                {
+                    throw new Exception("This entity is already saved under the id '" + d.Id + "' and cannot be reassigned the new id '" + id + "' in this session.");
+                }
+                return Save(entity, d);
             }
-
             return Save(entity, new Document {Session = this, Id = id});
         }
             

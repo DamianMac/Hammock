@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using Relax.Design;
 
 namespace Relax
 {
@@ -78,7 +79,7 @@ namespace Relax
             public ISecondaryExpression<TEntity> Ge(TKey value)
             {
                 (Values.Startkey ?? (Values.Startkey = new JArray())).Add(value);
-                (Values.Endkey ?? (Values.Endkey = new JArray())).Add(null);
+                (Values.Endkey ?? (Values.Endkey = new JArray())).Add(GetBounds(typeof(TKey)));
                 return this;
             }
 
@@ -91,6 +92,32 @@ namespace Relax
         private class TertiaryExpression<TKey> : ITertiaryOperator<TEntity, TKey>, ITertiaryExpression<TEntity>
         {
             protected ExpressionValues Values { get; private set; }
+
+            protected object GetBounds(Type t)
+            {
+                // weak, but json.net outputs scientific notation in 3.14159e+28 format, and 
+                // couchdb dislikes the +, so we just use a Really Big Integer here instead :(
+                switch (Type.GetTypeCode(t))
+                {
+                    case TypeCode.Boolean:  return true;
+                    case TypeCode.Char:     return char.MaxValue;
+                    case TypeCode.SByte:    
+                    case TypeCode.Byte:     
+                    case TypeCode.Int16:    
+                    case TypeCode.UInt16:   
+                    case TypeCode.Int32:    
+                    case TypeCode.UInt32:   
+                    case TypeCode.Int64:    
+                    case TypeCode.UInt64:   
+                    case TypeCode.Single:   
+                    case TypeCode.Double:   
+                    case TypeCode.Decimal:  return long.MaxValue;
+                    case TypeCode.DateTime: return DateTime.MaxValue;
+                    case TypeCode.String:   return "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
+                    default:
+                        throw new ArgumentOutOfRangeException("Queryable fields must be one of the primitive types, not " + t.Name);
+                }
+            }
 
             protected TertiaryExpression(ExpressionValues values)
             {
@@ -116,7 +143,7 @@ namespace Relax
 
             public Query<TEntity>.Result List()
             {
-                Spec().Execute();
+                return Spec().Execute();
             }
         }
 
@@ -132,13 +159,13 @@ namespace Relax
                 var js = BuildJavasriptExpressionFromLinq(x);
                 if (Fields.Contains(js))
                 {
-                    throw new ArgumentException("Repository.Where() can accept a field only once. The field '" + x.ToString() + "' appears more than once.");
+                    throw new ArgumentException("Repository.Where() can accept a field only once. The field '" + x + "' appears more than once.");
                 }
                 Fields.Add(js);
                 return this;
             }
 
-            public Design.View CreateView()
+            private View CreateView()
             {
                 var a = new StringBuilder(Fields.Count*32);
                 a.Append("function(doc) {");
@@ -149,14 +176,14 @@ namespace Relax
                 a.Append(Fields[0]);
                 for (int n = 1; n < Fields.Count; n++)
                 {
-                    a.Append(", ");
+                    a.Append(", doc");
                     a.Append(Fields[n]);
                 }
                 a.Append("], null);");
                 a.Append("\n }");
                 a.Append("\n}\n");
 
-                return new Design.View {Map = a.ToString()};
+                return new View {Map = a.ToString()};
             }
 
             public Query<TEntity> CreateQuery()
@@ -168,11 +195,18 @@ namespace Relax
                 {
                     foreach (var c in f)
                     {
-                        a.Append(char.IsLetter(c) ? c : '-');
+                        a.Append(char.IsLetter(c) ? char.ToLowerInvariant(c) : '-');
                     }
                 }
+                var name = a.ToString();
 
-                //Repository.Design   
+                // add the view to the design doc if needed
+                if (!Repository.Design.Views.ContainsKey(name))
+                {
+                    Repository.CreateView(name, CreateView());
+                }
+
+                return Repository.Queries[name];
             }
 
             public Query<TEntity>.Spec CreateQuerySpec(Query<TEntity> query)
@@ -210,6 +244,29 @@ namespace Relax
             throw new Exception("Unexptected state encountered parsing Repository.Where() expression.");
         }
 
+        public Query<TEntity> CreateView(string name, View v)
+        {
+            Design.Views[name] = v;
+            if (!Queries.ContainsKey(name))
+            {
+                CreateQuery(name, v);
+            }
+            Session.Save(Design);
+            return Queries[name];
+        }
+
+        private Query<TEntity> CreateQuery(string name, View v)
+        {
+            var q = new Query<TEntity>(
+                Session,
+                typeof(TEntity).Name.ToLowerInvariant(),
+                name,
+                !String.IsNullOrEmpty(v.Reduce)  
+            );
+            Queries.Add(name, q);
+            return q;
+        }
+
         public IPrimayOperator<TEntity, TKey> Where<TKey>(Expression<Func<TEntity, TKey>> xp)
         {
             return new PrimaryExpression<TKey>(
@@ -220,5 +277,6 @@ namespace Relax
                     }
             );
         }
+
     }
 }
