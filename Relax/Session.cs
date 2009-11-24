@@ -219,14 +219,7 @@ namespace Relax
 
         public bool IsEnrolled(string id)
         {
-            foreach (var p in _entities)
-            {
-                if (p.Value.Id == id)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return _entities.Where(x => x.Value.Id == id).Count() == 1;
         }
 
         public bool IsEnrolled<TEntity>(TEntity entity) where TEntity : class
