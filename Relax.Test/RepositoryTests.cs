@@ -9,7 +9,7 @@ using Relax.Design;
 namespace Relax.Test
 {
     [TestFixture]
-    public class RepositoryTests
+    public class RepositoryTests : CouchTest
     {
         public class Widget
         {
@@ -34,9 +34,9 @@ namespace Relax.Test
         private Session _sx;
         private Session _sx2;
 
-        [TestFixtureSetUp]
-        public void __setup()
+        public override void __setup()
         {
+            base.__setup();
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-repository-tests"))
             {

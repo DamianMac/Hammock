@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConnectionTests.cs" />
+    <Compile Include="CouchTest.cs" />
     <Compile Include="InvalidDatabaseNameExceptionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryTests.cs" />

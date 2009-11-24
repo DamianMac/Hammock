@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace Relax.Test
 {
     [TestFixture]
-    public class InvalidDatabaseNameExceptionTests
+    public class InvalidDatabaseNameExceptionTests 
     {
         [Test]
         public void Name_must_not_contain_uppercase()

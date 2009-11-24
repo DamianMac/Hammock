@@ -9,7 +9,7 @@ using Relax.Design;
 namespace Relax.Test
 {
     [TestFixture]
-    public class SessionTests
+    public class SessionTests : CouchTest
     {
         private Connection _cx;
         private Session _sx;
@@ -26,9 +26,9 @@ namespace Relax.Test
             public string Name { get; set; }
         }
 
-        [TestFixtureSetUp]
-        public void __setup()
+        public override void __setup()
         {
+            base.__setup();
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-session-tests"))
             {
@@ -43,9 +43,9 @@ namespace Relax.Test
             _doc = x.Save(w);
         }
 
-        [TestFixtureTearDown]
-        public void __teardown()
+        public override void __teardown()
         {
+            base.__teardown();
             //_cx.DeleteDatabase("relax-session-tests");
         }
 

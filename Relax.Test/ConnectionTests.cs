@@ -8,28 +8,28 @@ using NUnit.Framework;
 namespace Relax.Test
 {
     [TestFixture]
-    public class ConnectionTests
+    public class ConnectionTests : CouchTest
     {
         public static Connection CreateConnection()
         {
             return new Connection { Location = new Uri("http://localhost:5984") };    
         }
 
-        [TestFixtureSetUp]
-        public void __setup()
+        public override void __setup()
         {
+            base.__setup(); 
             var c = CreateConnection();
             c.ListDatabases().Where(x => x.StartsWith("relax-can-"))
                              .Each(x => c.DeleteDatabase(x));
             c.CreateDatabase("relax-can-delete-database");
         }
 
-        [TestFixtureTearDown]
         public void __teardown()
         {
             var c = CreateConnection();
             c.ListDatabases().Where(x => x.StartsWith("relax-can-"))
                              .Each(x => c.DeleteDatabase(x));
+            base.__teardown();
         }
 
         [Test]
