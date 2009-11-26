@@ -4,9 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using Relax.Design;
+using RedBranch.Hammock.Design;
 
-namespace Relax
+namespace RedBranch.Hammock
 {
     public interface IPrimayOperator<TEntity, TKey> : ISecondaryOperator<TEntity, TKey> where TEntity : class
     {

@@ -8,8 +8,8 @@
     <ProjectGuid>{7E375D72-E8BC-4462-976A-0DF59E7F91B4}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Relax.Test</RootNamespace>
-    <AssemblyName>Relax.Test</AssemblyName>
+    <RootNamespace>RedBranch.Hammock.Test</RootNamespace>
+    <AssemblyName>RedBranch.Hammock.Test</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -48,7 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConnectionTests.cs" />
-    <Compile Include="CouchTest.cs" />
     <Compile Include="InvalidDatabaseNameExceptionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryTests.cs" />
@@ -56,9 +55,9 @@
     <Compile Include="SessionTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Relax\Relax.csproj">
+    <ProjectReference Include="..\RedBranch.Hammock\RedBranch.Hammock.csproj">
       <Project>{2AC4392B-7D5E-4C6E-BA07-F70CED3C73EE}</Project>
-      <Name>Relax</Name>
+      <Name>RedBranch.Hammock</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

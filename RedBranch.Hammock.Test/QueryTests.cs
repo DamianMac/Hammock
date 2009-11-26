@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using Relax.Design;
+using RedBranch.Hammock.Design;
 
-namespace Relax.Test
+namespace RedBranch.Hammock.Test
 {
     [TestFixture]
-    public class QueryTests : CouchTest
+    public class QueryTests
     {
         public class Widget
         {
@@ -20,10 +20,9 @@ namespace Relax.Test
         private Connection _cx;
         private Session _sx;
 
-        
-        public override void __setup()
+        [TestFixtureSetUp]
+        public void FixtureSetup()
         {
-            base.__setup();
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-query-tests"))
             {

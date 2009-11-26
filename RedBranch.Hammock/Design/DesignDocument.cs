@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace Relax.Design
+namespace RedBranch.Hammock.Design
 {
     public class DesignDocument
     {

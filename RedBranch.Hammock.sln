@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Relax", "Relax\Relax.csproj", "{2AC4392B-7D5E-4C6E-BA07-F70CED3C73EE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedBranch.Hammock", "RedBranch.Hammock\RedBranch.Hammock.csproj", "{2AC4392B-7D5E-4C6E-BA07-F70CED3C73EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Relax.Test", "Relax.Test\Relax.Test.csproj", "{7E375D72-E8BC-4462-976A-0DF59E7F91B4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedBranch.Hammock.Test", "RedBranch.Hammock.Test\RedBranch.Hammock.Test.csproj", "{7E375D72-E8BC-4462-976A-0DF59E7F91B4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

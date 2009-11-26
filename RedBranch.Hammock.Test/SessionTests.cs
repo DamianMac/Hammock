@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 
 using NUnit.Framework;
-using Relax.Design;
+using RedBranch.Hammock.Design;
 
-namespace Relax.Test
+namespace RedBranch.Hammock.Test
 {
     [TestFixture]
-    public class SessionTests : CouchTest
+    public class SessionTests
     {
         private Connection _cx;
         private Session _sx;
@@ -26,9 +26,9 @@ namespace Relax.Test
             public string Name { get; set; }
         }
 
-        public override void __setup()
+        [TestFixtureSetUp]
+        public void FixtureSetup()
         {
-            base.__setup();
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-session-tests"))
             {
@@ -41,12 +41,6 @@ namespace Relax.Test
             var x = _cx.CreateSession(_sx.Database);
             var w = new Widget {Name = "gizmo", Tags = new[] {"whizbang", "geegollie"}};
             _doc = x.Save(w);
-        }
-
-        public override void __teardown()
-        {
-            base.__teardown();
-            //_cx.DeleteDatabase("relax-session-tests");
         }
 
         [Test]

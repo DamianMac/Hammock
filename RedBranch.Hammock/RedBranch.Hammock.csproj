@@ -8,8 +8,8 @@
     <ProjectGuid>{2AC4392B-7D5E-4C6E-BA07-F70CED3C73EE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Relax</RootNamespace>
-    <AssemblyName>Relax</AssemblyName>
+    <RootNamespace>RedBranch.Hammock</RootNamespace>
+    <AssemblyName>RedBranch.Hammock</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Connection.cs" />
+    <Compile Include="CouchProcess.cs" />
     <Compile Include="Design\DesignDocument.cs" />
     <Compile Include="Design\View.cs" />
     <Compile Include="InvalidDatabaseNameException.cs" />

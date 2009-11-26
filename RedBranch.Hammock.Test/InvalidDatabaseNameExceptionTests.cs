@@ -5,7 +5,7 @@ using System.Text;
 
 using NUnit.Framework;
 
-namespace Relax.Test
+namespace RedBranch.Hammock.Test
 {
     [TestFixture]
     public class InvalidDatabaseNameExceptionTests 

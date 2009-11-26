@@ -7,7 +7,7 @@ using System.Text;
 
 using Newtonsoft.Json;
 
-namespace Relax
+namespace RedBranch.Hammock
 {
     public static class __EnumerableExtensions
     {

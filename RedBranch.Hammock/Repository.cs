@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Relax.Design;
+using RedBranch.Hammock.Design;
 
-namespace Relax
+namespace RedBranch.Hammock
 {
     public interface IRepository<TEntity> where TEntity : class
     {

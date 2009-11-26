@@ -5,31 +5,32 @@ using System.Text;
 
 using NUnit.Framework;
 
-namespace Relax.Test
+namespace RedBranch.Hammock.Test
 {
     [TestFixture]
-    public class ConnectionTests : CouchTest
+    public class ConnectionTests
     {
         public static Connection CreateConnection()
         {
+            CouchProcess.EnsureRunning();
             return new Connection { Location = new Uri("http://localhost:5984") };    
         }
 
-        public override void __setup()
+        [TestFixtureSetUp]
+        public void FixtureSetup()
         {
-            base.__setup(); 
             var c = CreateConnection();
             c.ListDatabases().Where(x => x.StartsWith("relax-can-"))
                              .Each(x => c.DeleteDatabase(x));
             c.CreateDatabase("relax-can-delete-database");
         }
 
-        public void __teardown()
+        [TestFixtureTearDown]
+        public void FixtureTeardown()
         {
             var c = CreateConnection();
             c.ListDatabases().Where(x => x.StartsWith("relax-can-"))
                              .Each(x => c.DeleteDatabase(x));
-            base.__teardown();
         }
 
         [Test]

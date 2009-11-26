@@ -5,7 +5,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Relax
+namespace RedBranch.Hammock
 {
     public class Query<TEntity> where TEntity : class
     {

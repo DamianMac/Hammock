@@ -7,9 +7,9 @@ using System.Text;
 using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Relax.Design;
+using RedBranch.Hammock.Design;
 
-namespace Relax
+namespace RedBranch.Hammock
 {
     public class Document
     {

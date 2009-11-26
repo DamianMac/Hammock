@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using Relax.Design;
+using RedBranch.Hammock.Design;
 
-namespace Relax.Test
+namespace RedBranch.Hammock.Test
 {
     [TestFixture]
-    public class RepositoryTests : CouchTest
+    public class RepositoryTests
     {
         public class Widget
         {
@@ -34,9 +34,9 @@ namespace Relax.Test
         private Session _sx;
         private Session _sx2;
 
-        public override void __setup()
+        [TestFixtureSetUp]
+        public void FixtureSetup()
         {
-            base.__setup();
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-repository-tests"))
             {
