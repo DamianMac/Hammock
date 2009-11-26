@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using RedBranch.Hammock.Design;
 
@@ -11,6 +12,8 @@ namespace RedBranch.Hammock
         TEntity Get(string id);
         Document Save(TEntity entity);
         void Delete(TEntity entity);
+        IPrimayOperator<TEntity, TKey> Where<TKey>(Expression<Func<TEntity, TKey>> xp);
+        IEnumerable<TEntity> All();
     }
 
     public partial class Repository<TEntity> : IRepository<TEntity> where TEntity : class

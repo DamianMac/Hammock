@@ -211,6 +211,13 @@ namespace RedBranch.Hammock.Test
             Assert.That(z.Rows.Length, Is.EqualTo(3));
         }
 
+        [Test]
+        public void Repository_can_list_all_entities()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            var all = r.All();
+            Assert.That(all.Count(), Is.EqualTo(5));
+        }
 
     }
 }

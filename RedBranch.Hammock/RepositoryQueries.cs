@@ -278,5 +278,19 @@ namespace RedBranch.Hammock
             );
         }
 
+        public IEnumerable<TEntity> All()
+        {
+            if (!Design.Views.ContainsKey("_all"))
+            {
+                var a = 
+                    @"function(doc) {
+                      if (doc._id.indexOf('" + typeof (TEntity).Name.ToLowerInvariant() + @"-') === 0) {
+                        emit(null, null);
+                      }
+                    }";
+                CreateView("_all", new View {Map = a});
+            }
+            return Queries["_all"].All().Execute().Rows.Select(x => x.Entity);
+        }
     }
 }
