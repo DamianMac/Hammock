@@ -43,7 +43,7 @@ namespace Relax
         }
     }
 
-    public class Session
+    public class Session : IDisposable
     {
         private class __DocumentResponse
         {
@@ -241,34 +241,24 @@ namespace Relax
             _entities = _entities.Where(x => x.Value.Id.StartsWith("_design/")).ToDictionary(x => x.Key, x => x.Value);
         }
 
-        private class __SessionLock : IDisposable
-        {
-            private Session _sx;
-
-            public __SessionLock(Session sx)
-            {
-                _sx = sx;
-            }
-
-            public void Dispose()
-            {
-                _sx.Release();
-            }
-        }
-
         public IDisposable Lock()
         {
             Interlocked.Increment(ref _locks);
-            return new __SessionLock(this);
+            return this;
         }
 
         private void Release()
+        {
+            ((IDisposable)this).Dispose();
+        }
+
+        void IDisposable.Dispose()
         {
             var l = Interlocked.Decrement(ref _locks);
             if (l < 1)
             {
                 Connection.ReturnSession(this);
-            }
+            }        
         }
     }
 }
