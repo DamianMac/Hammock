@@ -13,11 +13,11 @@ namespace RedBranch.Hammock
 {
     public class Document
     {
-        public Session Session { get; set; }
-        public string Id { get; set; }
-        public string Revision { get; set; }
+        [JsonIgnore] public Session Session { get; set; }
+        [JsonIgnore] public string Id { get; set; }
+        [JsonIgnore] public string Revision { get; set; }
 
-        public string Location
+        [JsonIgnore] public string Location
         {
             get
             {
@@ -30,17 +30,22 @@ namespace RedBranch.Hammock
 
         public override int GetHashCode()
         {
-            return Id.GetHashCode() ^ (Revision ?? "-").GetHashCode();
+            return (Id ?? "/").GetHashCode() ^ (Revision ?? "-").GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            var d = (Document)obj;
+            var d = obj as Document;
             return null == d
                        ? base.Equals(obj)
                        : d.Id == Id &&
                          d.Revision == Revision;
         }
+    }
+
+    public interface IHasDocument
+    {
+        [JsonIgnore] Document Document { get; set; }
     }
 
     public class Session : IDisposable
@@ -111,20 +116,26 @@ namespace RedBranch.Hammock
             
         public Document Save<TEntity>(TEntity entity) where TEntity : class
         {
-            var d = _entities.ContainsKey(entity)
-                ? _entities[entity]
-                : new Document
-                {
-                    Session = this,
-                    Id = typeof(TEntity).Name.ToLowerInvariant() + "-" + Guid.NewGuid(),
-                    Revision = null,
-                };
-            
+            var d =
+                _entities.ContainsKey(entity)
+                    ? _entities[entity]
+                    : (entity as Document) ?? 
+                      (entity is IHasDocument ? ((IHasDocument)entity).Document : null) ??
+                      new Document();
+            if (String.IsNullOrEmpty(d.Id))
+            {
+                d.Id = typeof (TEntity).Name.ToLowerInvariant() + "-" + Guid.NewGuid();
+                d.Revision = null;
+            }
             return Save(entity, d);
         }
 
         private Document Save<TEntity>(TEntity entity, Document d) where TEntity : class
         {
+            if (null == d.Session)
+            {
+                d.Session = this;
+            }
             var serializer = new JsonSerializer(); 
             var request = (HttpWebRequest) WebRequest.Create(d.Location);
             request.Method = "PUT";
@@ -149,12 +160,29 @@ namespace RedBranch.Hammock
                 var response = (__DocumentResponse)serializer.Deserialize(reader, typeof(__DocumentResponse));
                 d = response.ToDocument(this);
             }
+
+            // use the entity itself if it subclasses document
+            var docsubclass = entity as Document;
+            if (null != docsubclass)
+            {
+                docsubclass.Id = d.Id;
+                docsubclass.Revision = d.Revision;
+                docsubclass.Session = d.Session;
+                d = docsubclass;
+            }
     
             if (_entities.ContainsKey(entity))
             {
                 _entities.Remove(entity);
             }
             _entities.Add(entity, d);
+
+            // fill the document property if the entity implements IHasDocument
+            var icanhasdoc = entity as IHasDocument;
+            if (null != icanhasdoc)
+            {
+                icanhasdoc.Document = d;
+            }
 
             return d;
         }
@@ -187,7 +215,27 @@ namespace RedBranch.Hammock
                 d.Revision = (string) o["_rev"];
                 var serializer = new JsonSerializer();
                 var e = (TEntity)serializer.Deserialize(new JTokenReader(o), typeof(TEntity));
+
+                // if the entity subclasses document, use the entity itself
+                // as the document.
+                var docsubclass = e as Document;
+                if (null != docsubclass)
+                {
+                    docsubclass.Id = d.Id;
+                    docsubclass.Revision = d.Revision;
+                    docsubclass.Session = d.Session;
+                    d = docsubclass;
+                }
+
                 _entities[e] = d;
+
+                // fill the document property if the entity implements IHasDocument
+                var icanhasdoc = e as IHasDocument;
+                if (null != icanhasdoc)
+                {
+                    icanhasdoc.Document = d;
+                }
+
                 return e;
             }
         }

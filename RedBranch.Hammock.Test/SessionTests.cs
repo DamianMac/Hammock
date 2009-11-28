@@ -180,5 +180,93 @@ namespace RedBranch.Hammock.Test
             Assert.That(u, Is.SameAs(s));
         }
 
+        public class DocumentSubclass : Document
+        {
+            public string Name { get; set; }
+        }
+
+        public class IHasDocumentImplementation : IHasDocument
+        {
+            public Document Document { get; set; }
+            public string Name { get; set; }
+        }
+
+        [Test]
+        public void Session_uses_id_when_saving_document_subclassed_entities()
+        {
+            // http://code.google.com/p/relax-net/issues/detail?id=7
+            var s = _cx.CreateSession(_sx.Database);
+            var x = new DocumentSubclass() {Name = "foo", Id = "foo-document-subclass"};
+            s.Save(x);
+            var y = s.Load<DocumentSubclass>("foo-document-subclass");
+            Assert.That(y, Is.SameAs(x));
+        }
+
+        [Test]
+        public void Session_fills_id_and_revision_when_saving_document_subclassed_entities()
+        {
+            // http://code.google.com/p/relax-net/issues/detail?id=7
+            var s = _cx.CreateSession(_sx.Database);
+            var x = new DocumentSubclass();
+            s.Save(x);
+            Assert.That(x.Id, Is.Not.Empty);
+            Assert.That(x.Revision, Is.Not.Empty);
+        }
+
+        [Test]
+        public void Session_fills_id_and_revision_when_loading_document_subclassed_entities()
+        {
+            // http://code.google.com/p/relax-net/issues/detail?id=7
+            var s = _cx.CreateSession(_sx.Database);
+            var x = new DocumentSubclass();
+            s.Save(x);
+
+            var t = _cx.CreateSession(_sx.Database);
+            var y = t.Load<DocumentSubclass>(x.Id);
+
+            Assert.That(y.Id, Is.EqualTo(x.Id));
+            Assert.That(y.Revision, Is.EqualTo(x.Revision));
+        }
+
+        [Test]
+        public void Session_uses_id_when_saving_ihasdocument_implentations()
+        {
+            // http://code.google.com/p/relax-net/issues/detail?id=7
+            var s = _cx.CreateSession(_sx.Database);
+            var x = new IHasDocumentImplementation()
+            {
+                Name = "bar",
+                Document = new Document { Id = "bar-document-subclass" }
+            };
+            s.Save(x);
+            var y = s.Load<IHasDocumentImplementation>("bar-document-subclass");
+            Assert.That(y, Is.SameAs(x));
+        }
+
+        [Test]
+        public void Session_fills_document_property_when_saving_entities_that_implement_ihasdocument()
+        {
+            // http://code.google.com/p/relax-net/issues/detail?id=7
+            var s = _cx.CreateSession(_sx.Database);
+            var x = new IHasDocumentImplementation();
+            s.Save(x);
+            Assert.That(x.Document.Id, Is.Not.Empty);
+            Assert.That(x.Document.Revision, Is.Not.Empty);
+        }
+
+        [Test]
+        public void Session_fills_document_property_when_loading_entities_that_implement_ihasdocument()
+        {
+            // http://code.google.com/p/relax-net/issues/detail?id=7
+            var s = _cx.CreateSession(_sx.Database);
+            var x = new IHasDocumentImplementation();
+            s.Save(x);
+
+            var t = _cx.CreateSession(_sx.Database);
+            var y = t.Load<IHasDocumentImplementation>(x.Document.Id);
+
+            Assert.That(y.Document.Id, Is.EqualTo(x.Document.Id));
+            Assert.That(y.Document.Revision, Is.EqualTo(x.Document.Revision));
+        }
     }
 }
