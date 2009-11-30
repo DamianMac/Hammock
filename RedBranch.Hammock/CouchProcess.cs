@@ -13,24 +13,27 @@ namespace RedBranch.Hammock
         private static bool isInDebugMode = false;
         private static bool initialized = false;
      
-        public static void EnsureRunning(int port)
+        public static void EnsureRunning(Uri location)
         {
 #if DEBUG
             isInDebugMode = true;
 #endif
             try
             {
-                switch (Environment.OSVersion.Platform)
+                if (location.Host == "localhost" || location.Host == "127.0.0.1" || location.Host == "[::1]")
                 {
-                    case PlatformID.Unix:
-                    case PlatformID.MacOSX:
-                        EnsureRunningUnix(port);
-                        return;
+                    switch (Environment.OSVersion.Platform)
+                    {
+                        case PlatformID.Unix:
+                        case PlatformID.MacOSX:
+                            EnsureRunningUnix(location.Port);
+                            return;
 
-                    case PlatformID.Win32Windows:
-                    case PlatformID.Win32NT:
-                        EnsureRunningWindows(port);
-                        return;
+                        case PlatformID.Win32Windows:
+                        case PlatformID.Win32NT:
+                            EnsureRunningWindows(location.Port);
+                            return;
+                    }
                 }
             }
             catch

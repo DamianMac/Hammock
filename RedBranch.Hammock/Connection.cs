@@ -38,8 +38,8 @@ namespace RedBranch.Hammock
                 using (var reader = new JsonTextReader(new StreamReader(e.Response.GetResponseStream())))
                 {
                     var serializer = new JsonSerializer();
-                    var error = (__CouchError)serializer.Deserialize(reader, typeof (__CouchError));
-                    throw new CouchException((int)((HttpWebResponse)e.Response).StatusCode, error.error, error.reason); 
+                    var error = (__CouchError)serializer.Deserialize(reader, typeof(__CouchError));
+                    throw new CouchException((int)((HttpWebResponse)e.Response).StatusCode, error.error, error.reason);
                 }
             }
         }
@@ -50,7 +50,8 @@ namespace RedBranch.Hammock
         public int Status { get; private set; }
         public string Error { get; private set; }
 
-        public CouchException(int status, string error, string reason) : base(reason)
+        public CouchException(int status, string error, string reason)
+            : base(reason)
         {
             Status = status;
             Error = error;
@@ -59,11 +60,15 @@ namespace RedBranch.Hammock
 
     public class Connection
     {
-        public Connection(Uri location)
+        public Connection(Uri location, bool autoStart)
         {
             this.Location = location;
-            CouchProcess.EnsureRunning(location.Port);
+            if (autoStart)
+                CouchProcess.EnsureRunning(location);
         }
+        public Connection(Uri location)
+            : this(location, false) { }
+
         public Uri Location { get; private set; }
         public string Version { get; set; }
 
@@ -83,7 +88,7 @@ namespace RedBranch.Hammock
             using (var reader = request.GetCouchResponse())
             {
                 var serializer = new JsonSerializer();
-                return (string[])serializer.Deserialize(reader, typeof (string[]));
+                return (string[])serializer.Deserialize(reader, typeof(string[]));
             }
         }
 
