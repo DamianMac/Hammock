@@ -12,8 +12,7 @@ namespace RedBranch.Hammock.Test
     {
         public static Connection CreateConnection()
         {
-            CouchProcess.EnsureRunning();
-            return new Connection { Location = new Uri("http://localhost:5984") };    
+            return new Connection(new Uri("http://localhost:5984"));    
         }
 
         [TestFixtureSetUp]

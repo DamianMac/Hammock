@@ -59,7 +59,12 @@ namespace RedBranch.Hammock
 
     public class Connection
     {
-        public Uri Location { get; set; }
+        public Connection(Uri location)
+        {
+            this.Location = location;
+            CouchProcess.EnsureRunning(location.Port);
+        }
+        public Uri Location { get; private set; }
         public string Version { get; set; }
 
         private Dictionary<string, List<Session>> _sessions = new Dictionary<string, List<Session>>();

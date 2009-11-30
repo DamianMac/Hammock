@@ -4,56 +4,78 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Net.NetworkInformation;
 
 namespace RedBranch.Hammock
 {
     public static class CouchProcess
     {
-        static Process _couchProcess;
-
-        public static Process EnsureRunning()
+        private static bool isInDebugMode = false;
+        private static bool initialized = false;
+     
+        public static void EnsureRunning(int port)
         {
+#if DEBUG
+            isInDebugMode = true;
+#endif
             try
             {
                 switch (Environment.OSVersion.Platform)
                 {
                     case PlatformID.Unix:
                     case PlatformID.MacOSX:
-                        return EnsureRunningUnix();
+                        EnsureRunningUnix(port);
+                        return;
 
                     case PlatformID.Win32Windows:
                     case PlatformID.Win32NT:
-                        return EnsureRunningWindows();
+                        EnsureRunningWindows(port);
+                        return;
                 }
             }
             catch
             {
-                return null;
             }
             throw new NotSupportedException("This method is not supported on the current operating system.");
         }
 
-        static Process EnsureRunningUnix()
+        static Process EnsureRunningUnix(int port)
         {
             return null;
         }
 
-        static Process EnsureRunningWindows()
+        private static bool IsAlreadyRunningWindows(int port)
         {
-            if (_couchProcess == null)
+            var tcpConnInfoArray = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
+            bool result = tcpConnInfoArray.Where(x => x.Port == port).Count() == 1;
+            return result;
+        }
+        static void EnsureRunningWindows(int port)
+        {
+            if (!initialized)
             {
+                if (IsAlreadyRunningWindows(port))
+                {
+                    initialized = true;
+                    return;
+                }
                 var path = String.Format(@"{0}\Apache Software Foundation\CouchDB\bin\couchdb.bat", ProgramFilesx86());
                 if (File.Exists(path))
                 {
-                    var psi = new ProcessStartInfo(path) {WorkingDirectory = Path.GetDirectoryName(path)};
-                    _couchProcess = Process.Start(psi);
+                    var psi = new ProcessStartInfo(path)
+                    {
+                        CreateNoWindow = !isInDebugMode,
+                        WindowStyle = isInDebugMode ? ProcessWindowStyle.Normal : ProcessWindowStyle.Hidden,
+                        WorkingDirectory = Path.GetDirectoryName(path)
+                    };
+                    Process.Start(psi);
+                    initialized = true;
                 }
                 else
                 {
-                    return null;
+                    throw new FileNotFoundException("CouchDB not installed");
                 }
             }
-            return _couchProcess;
         }
 
         static string ProgramFilesx86()
