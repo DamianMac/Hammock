@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -103,8 +103,7 @@ namespace RedBranch.Hammock.Test
         [Test]
         public void Cannot_load_entity_with_wrong_generic_argument()
         {
-            var w = _sx.Load<Widget>(_doc.Id);
-
+            _sx.Load<Widget>(_doc.Id);
             Assert.Throws<InvalidCastException>(() => _sx.Load<Doodad>(_doc.Id));
         }
 

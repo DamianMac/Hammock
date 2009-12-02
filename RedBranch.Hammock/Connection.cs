@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -60,14 +60,10 @@ namespace RedBranch.Hammock
 
     public class Connection
     {
-        public Connection(Uri location, bool autoStart)
+        public Connection(Uri location)
         {
             this.Location = location;
-            if (autoStart)
-                CouchProcess.EnsureRunning(location);
         }
-        public Connection(Uri location)
-            : this(location, false) { }
 
         public Uri Location { get; private set; }
         public string Version { get; set; }

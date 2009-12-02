@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +12,7 @@ namespace RedBranch.Hammock.Test
     {
         public static Connection CreateConnection()
         {
-            return new Connection(new Uri("http://localhost:5984"),true);    
+            return new Connection(new Uri("http://localhost:5984"));    
         }
 
         [TestFixtureSetUp]
@@ -35,7 +35,6 @@ namespace RedBranch.Hammock.Test
         [Test]
         public void Slashes_in_database_names_must_be_escaped()
         {
-            var c = CreateConnection();
             Assert.AreEqual(
                 "http://localhost:5984/forward%2Fslash/",
                 CreateConnection().GetDatabaseLocation("forward/slash")

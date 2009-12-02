@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -152,7 +152,7 @@ namespace RedBranch.Hammock.Test
         [Test]
         public void Repository_creates_design_document_if_not_found()
         {
-            var r = new Repository<Wingding>(_sx);
+            new Repository<Wingding>(_sx);
             Assert.That(_sx.IsEnrolled("_design/wingding"));
         }
 
@@ -160,9 +160,9 @@ namespace RedBranch.Hammock.Test
         public void Repository_can_generate_views()
         {
             var r = new Repository<Widget>(_sx);
-            var z = r.Where(x => x.Name).Eq("gadget")
-                       .And(x => x.Cost).Bw(10, 20)
-                       .List();
+            r.Where(x => x.Name).Eq("gadget")
+               .And(x => x.Cost).Bw(10,20)
+               .List();
             Assert.That(
                 _sx.Load<DesignDocument>("_design/widget").Views.ContainsKey(
                 "by-name-cost"
