@@ -40,6 +40,8 @@ namespace RedBranch.Hammock
 
         Query<TEntity>.Spec Spec();
         Query<TEntity>.Result List();
+        TEntity Single();
+        TEntity SingleOrDefault();
     }
 
     public partial class Repository<TEntity>
@@ -144,6 +146,22 @@ namespace RedBranch.Hammock
             public Query<TEntity>.Result List()
             {
                 return Spec().Execute();
+            }
+
+            public TEntity Single()
+            {
+                var x = SingleOrDefault();
+                if (null == x)
+                {
+                    throw new Exception("No entity found.");
+                }
+                return x;
+            }
+
+            public TEntity SingleOrDefault()
+            {
+                var result = Spec().WithDocuments().Execute();
+                return result.Total == 0 ? null : result.Rows.First().Entity;
             }
         }
 
