@@ -141,7 +141,8 @@ namespace RedBranch.Hammock
             {
                 d.Session = this;
             }
-            var serializer = new JsonSerializer(); 
+            var serializer = new JsonSerializer();
+            serializer.NullValueHandling = NullValueHandling.Ignore;
             var request = (HttpWebRequest) WebRequest.Create(d.Location);
             request.Method = "PUT";
             using (var writer = new JsonTextWriter(new StreamWriter(request.GetRequestStream())))
