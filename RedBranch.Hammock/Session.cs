@@ -41,6 +41,11 @@ namespace RedBranch.Hammock
                        : d.Id == Id &&
                          d.Revision == Revision;
         }
+
+        public static string For<TEntity>(string withId)
+        {
+            return string.Format("{0}-{1}", typeof (TEntity).Name.ToLowerInvariant(), withId);
+        }
     }
 
     public interface IHasDocument
@@ -124,7 +129,7 @@ namespace RedBranch.Hammock
                       new Document();
             if (String.IsNullOrEmpty(d.Id))
             {
-                d.Id = typeof (TEntity).Name.ToLowerInvariant() + "-" + Guid.NewGuid();
+                d.Id = Document.For<TEntity>(Guid.NewGuid().ToString());
                 d.Revision = null;
             }
             return Save(entity, d);
