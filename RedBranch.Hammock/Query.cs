@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -62,7 +64,7 @@ namespace RedBranch.Hammock
                                 else
                                 {
                                     var serializer = new JsonSerializer();
-                                    _entity = (TEntity) serializer.Deserialize(new JTokenReader(_data), typeof (TEntity));
+                                    _entity = EntityReader.Read<TEntity>(_data, ref d);
                                     Query.Session.Enroll(d, _entity);
                                 }
                             }
@@ -99,7 +101,7 @@ namespace RedBranch.Hammock
             }
         }
 
-        public class Spec
+        public class Spec : IEnumerable<TEntity>
         {
             public Query<TEntity> Query { get; private set; }
 
@@ -231,6 +233,16 @@ namespace RedBranch.Hammock
                     sep = '&';
                 }
                 return location.ToString();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+
+            public IEnumerator<TEntity> GetEnumerator()
+            {
+                return Execute().Rows.Select(x => x.Entity).GetEnumerator();
             }
 
             public Spec Next()

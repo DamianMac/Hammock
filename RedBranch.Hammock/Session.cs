@@ -11,6 +11,37 @@ using RedBranch.Hammock.Design;
 
 namespace RedBranch.Hammock
 {
+    class EntityReader
+    {
+        public static TEntity Read<TEntity>(JToken data, ref Document d)
+        {
+            d.Id = (string) data["_id"];
+            d.Revision = (string) data["_rev"];
+            var serializer = new JsonSerializer();
+            var e = (TEntity)serializer.Deserialize(new JTokenReader(data), typeof(TEntity));
+
+            // if the entity subclasses document, use the entity itself
+            // as the document.
+            var docsubclass = e as Document;
+            if (null != docsubclass)
+            {
+                docsubclass.Id = d.Id;
+                docsubclass.Revision = d.Revision;
+                docsubclass.Session = d.Session;
+                d = docsubclass;
+            }
+
+            // fill the document property if the entity implements IHasDocument
+            var icanhasdoc = e as IHasDocument;
+            if (null != icanhasdoc)
+            {
+                icanhasdoc.Document = d;
+            }
+
+            return e;
+        }
+    }
+
     public class Document
     {
         [JsonIgnore] public Session Session { get; set; }
@@ -217,30 +248,9 @@ namespace RedBranch.Hammock
             using (var reader = request.GetCouchResponse())
             {
                 var o = JToken.ReadFrom(reader);
-                d.Id = (string)o["_id"];
-                d.Revision = (string) o["_rev"];
-                var serializer = new JsonSerializer();
-                var e = (TEntity)serializer.Deserialize(new JTokenReader(o), typeof(TEntity));
 
-                // if the entity subclasses document, use the entity itself
-                // as the document.
-                var docsubclass = e as Document;
-                if (null != docsubclass)
-                {
-                    docsubclass.Id = d.Id;
-                    docsubclass.Revision = d.Revision;
-                    docsubclass.Session = d.Session;
-                    d = docsubclass;
-                }
-
+                var e = EntityReader.Read<TEntity>(o, ref d);
                 _entities[e] = d;
-
-                // fill the document property if the entity implements IHasDocument
-                var icanhasdoc = e as IHasDocument;
-                if (null != icanhasdoc)
-                {
-                    icanhasdoc.Document = d;
-                }
 
                 return e;
             }

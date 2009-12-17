@@ -35,11 +35,19 @@ namespace RedBranch.Hammock
             }
             catch (WebException e)
             {
-                using (var reader = new JsonTextReader(new StreamReader(e.Response.GetResponseStream())))
+                if (e.Response != null)
                 {
-                    var serializer = new JsonSerializer();
-                    var error = (__CouchError)serializer.Deserialize(reader, typeof(__CouchError));
-                    throw new CouchException((int)((HttpWebResponse)e.Response).StatusCode, error.error, error.reason);
+                    using (var reader = new JsonTextReader(new StreamReader(e.Response.GetResponseStream())))
+                    {
+                        var serializer = new JsonSerializer();
+                        var error = (__CouchError) serializer.Deserialize(reader, typeof (__CouchError));
+                        throw new CouchException((int) ((HttpWebResponse) e.Response).StatusCode, error.error,
+                                                 error.reason);
+                    }
+                }
+                else
+                {
+                    throw;   
                 }
             }
         }

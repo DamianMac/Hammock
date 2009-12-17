@@ -13,7 +13,7 @@ namespace RedBranch.Hammock
         Document Save(TEntity entity);
         void Delete(TEntity entity);
         IPrimayOperator<TEntity, TKey> Where<TKey>(Expression<Func<TEntity, TKey>> xp);
-        IEnumerable<TEntity> All();
+        Query<TEntity>.Spec All();
     }
 
     public partial class Repository<TEntity> : IRepository<TEntity> where TEntity : class

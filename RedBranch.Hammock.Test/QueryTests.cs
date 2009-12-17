@@ -17,6 +17,11 @@ namespace RedBranch.Hammock.Test
             public decimal Cost { get; set; }
         }
 
+        public class WidgetWithDocument : Widget, IHasDocument
+        {
+            public Document Document { get; set; }
+        }
+
         private Connection _cx;
         private Session _sx;
 
@@ -51,7 +56,7 @@ namespace RedBranch.Hammock.Test
                          }
                  },
                  "_design/widgets"
-            );
+            );      
         }
 
         [Test]
@@ -139,5 +144,18 @@ namespace RedBranch.Hammock.Test
             Assert.IsNotNull(e1);
             Assert.AreSame(e0, e1);
         }
+
+        [Test]
+        public void Can_prefetch_document_and_fill_ihasdocument()
+        {
+            var s2 = _cx.CreateSession("relax-query-tests");
+            var q = new Query<WidgetWithDocument>(s2, "widgets", "all-widgets");
+
+            var r0 = q.Limit(1).WithDocuments().Execute();
+            var e0 = r0.Rows.First().Entity;
+
+            Assert.That(e0.Document, Is.Not.Null);
+        }
+
     }
 }

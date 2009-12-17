@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -34,7 +35,7 @@ namespace RedBranch.Hammock
         ITertiaryExpression<TEntity> Le(TKey value);
     }
 
-    public interface ITertiaryExpression<TEntity> where TEntity : class
+    public interface ITertiaryExpression<TEntity> : IEnumerable<TEntity> where TEntity : class
     {
         ITertiaryOperator<TEntity, TKey> And<TKey>(Expression<Func<TEntity, TKey>> xp);
 
@@ -162,6 +163,16 @@ namespace RedBranch.Hammock
             {
                 var result = Spec().WithDocuments().Execute();
                 return result.Total == 0 ? null : result.Rows.First().Entity;
+            }
+
+            public IEnumerator<TEntity> GetEnumerator()
+            {
+                return Spec().GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
             }
         }
 
@@ -296,7 +307,7 @@ namespace RedBranch.Hammock
             );
         }
 
-        public IEnumerable<TEntity> All()
+        public Query<TEntity>.Spec All()
         {
             if (!Design.Views.ContainsKey("_all"))
             {
@@ -308,7 +319,7 @@ namespace RedBranch.Hammock
                     }";
                 CreateView("_all", new View {Map = a});
             }
-            return Queries["_all"].All().Execute().Rows.Select(x => x.Entity);
+            return Queries["_all"].All();
         }
     }
 }
