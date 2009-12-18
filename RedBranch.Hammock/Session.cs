@@ -11,80 +11,7 @@ using RedBranch.Hammock.Design;
 
 namespace RedBranch.Hammock
 {
-    class EntityReader
-    {
-        public static TEntity Read<TEntity>(JToken data, ref Document d)
-        {
-            d.Id = (string) data["_id"];
-            d.Revision = (string) data["_rev"];
-            var serializer = new JsonSerializer();
-            var e = (TEntity)serializer.Deserialize(new JTokenReader(data), typeof(TEntity));
-
-            // if the entity subclasses document, use the entity itself
-            // as the document.
-            var docsubclass = e as Document;
-            if (null != docsubclass)
-            {
-                docsubclass.Id = d.Id;
-                docsubclass.Revision = d.Revision;
-                docsubclass.Session = d.Session;
-                d = docsubclass;
-            }
-
-            // fill the document property if the entity implements IHasDocument
-            var icanhasdoc = e as IHasDocument;
-            if (null != icanhasdoc)
-            {
-                icanhasdoc.Document = d;
-            }
-
-            return e;
-        }
-    }
-
-    public class Document
-    {
-        [JsonIgnore] public Session Session { get; set; }
-        [JsonIgnore] public string Id { get; set; }
-        [JsonIgnore] public string Revision { get; set; }
-
-        [JsonIgnore] public string Location
-        {
-            get
-            {
-                return Session.Connection.GetDatabaseLocation(Session.Database) +
-                    (Id.StartsWith("_design/")
-                        ? "_design/" + Id.Substring(8).Replace("/", "%2F")
-                        : Id.Replace("/", "%2F"));
-            }
-        }
-
-        public override int GetHashCode()
-        {
-            return (Id ?? "/").GetHashCode() ^ (Revision ?? "-").GetHashCode();
-        }
-
-        public override bool Equals(object obj)
-        {
-            var d = obj as Document;
-            return null == d
-                       ? base.Equals(obj)
-                       : d.Id == Id &&
-                         d.Revision == Revision;
-        }
-
-        public static string For<TEntity>(string withId)
-        {
-            return string.Format("{0}-{1}", typeof (TEntity).Name.ToLowerInvariant(), withId);
-        }
-    }
-
-    public interface IHasDocument
-    {
-        [JsonIgnore] Document Document { get; set; }
-    }
-
-    public class Session : IDisposable
+    public partial class Session : IDisposable
     {
         private class __DocumentResponse
         {
@@ -172,32 +99,29 @@ namespace RedBranch.Hammock
             {
                 d.Session = this;
             }
-            var serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Ignore;
+
+            // send put            
             var request = (HttpWebRequest) WebRequest.Create(d.Location);
             request.Method = "PUT";
+            var o = EntitySerializer.Write(entity, d);
             using (var writer = new JsonTextWriter(new StreamWriter(request.GetRequestStream())))
             {
-                if (!String.IsNullOrEmpty(d.Revision))
-                {
-                    var jwriter = new JTokenWriter();
-                    serializer.Serialize(jwriter, entity);
-                    var o = jwriter.Token;
-                    o.First.AddBeforeSelf(new JProperty("_rev", d.Revision));
-                    o.First.AddBeforeSelf(new JProperty("_id", d.Id));
-                    o.WriteTo(writer);
-                }
-                else
-                {
-                    serializer.Serialize(writer, entity);
-                }
+                o.WriteTo(writer);
             }
+
+            // get couch reply
             using (var reader = request.GetCouchResponse())
             {
+                var serializer = new JsonSerializer();
                 var response = (__DocumentResponse)serializer.Deserialize(reader, typeof(__DocumentResponse));
                 d = response.ToDocument(this);
             }
+                      
+            return UpdateEntityDocument(entity, d);
+        }
 
+        private Document UpdateEntityDocument<TEntity>(TEntity entity, Document d) where TEntity : class
+        {
             // use the entity itself if it subclasses document
             var docsubclass = entity as Document;
             if (null != docsubclass)
@@ -223,7 +147,7 @@ namespace RedBranch.Hammock
 
             return d;
         }
-
+        
         public TEntity Load<TEntity>(string id) where TEntity : class
         {
             foreach (var p in _entities)
@@ -249,7 +173,7 @@ namespace RedBranch.Hammock
             {
                 var o = JToken.ReadFrom(reader);
 
-                var e = EntityReader.Read<TEntity>(o, ref d);
+                var e = EntitySerializer.Read<TEntity>(o, ref d);
                 _entities[e] = d;
 
                 return e;

@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AttachmentTests.cs" />
     <Compile Include="ConnectionTests.cs" />
     <Compile Include="InvalidDatabaseNameExceptionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
