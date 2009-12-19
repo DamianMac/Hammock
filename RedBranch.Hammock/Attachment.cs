@@ -41,13 +41,19 @@ namespace RedBranch.Hammock
 
     public partial class Session
     {
-        public Document AttachFile<TEntity>(TEntity entity, HttpPostedFileBase file) where TEntity : class, IHasAttachments
+        public Document AttachFile<TEntity>(TEntity entity, HttpPostedFileBase file) where TEntity : class
         {
             return AttachFile(entity, file.FileName, file.ContentType, file.InputStream);
         }
 
-        public Document AttachFile<TEntity>(TEntity entity, string filename, string contentType, Stream data) where TEntity : class, IHasAttachments
+        public Document AttachFile<TEntity>(TEntity entity, string filename, string contentType, Stream data) where TEntity : class
         {
+            var withattachments = entity as IHasAttachments;
+            if (null == withattachments)
+            {
+                throw new NotSupportedException("An entity must implement IHasAttachments in order to attach a file to it.");
+            }
+
             if (!IsEnrolled(entity))
             {
                 throw new Exception("An entity must be enrolled in the session in order to attach files. Use Save() first, then attach the file.");
@@ -88,7 +94,7 @@ namespace RedBranch.Hammock
                             Length = buf.Length,
                             Stub = true,
                         };
-            (entity.Attachments ?? (entity.Attachments = new Attachments())).Add(filename, a);
+            (withattachments.Attachments ?? (withattachments.Attachments = new Attachments())).Add(filename, a);
 
             return d;
         }

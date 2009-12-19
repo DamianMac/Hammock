@@ -103,6 +103,8 @@ namespace RedBranch.Hammock
 
         public class Spec : IEnumerable<TEntity>
         {
+            private Result _cachedResult;
+
             public Query<TEntity> Query { get; private set; }
 
             bool _include_docs;
@@ -125,57 +127,67 @@ namespace RedBranch.Hammock
                 var request = (HttpWebRequest)WebRequest.Create(location);
                 using (var reader = request.GetCouchResponse())
                 {
-                    return new Result(Query, this, JToken.ReadFrom(reader));
+                    return (_cachedResult = new Result(Query, this, JToken.ReadFrom(reader)));
                 }
             }
 
             public Spec From(JToken key)
             {
+                _cachedResult = null;
                 _start_key = key;
                 return this;
             }
             public Spec From(object key)
             {
+                _cachedResult = null;
                 _start_key = JToken.FromObject(key);
                 return this;
             }
             public Spec To(JToken key)
             {
+                _cachedResult = null;
                 _end_key = key;
                 return this;
             }
             public Spec To(object key)
             {
+                _cachedResult = null;
                 _end_key = JToken.FromObject(key);
                 return this;
             }
             public Spec FromDocId(string docid)
             {
+                _cachedResult = null;
                 _startkey_docid = docid;
                 return this;
             }
             public Spec ToDocId(string docid)
             {
+                _cachedResult = null;
                 _endkey_docid = docid;
                 return this;
             }
             public Spec Skip(long rows)
             {
+                _cachedResult = null;
                 _skip = rows;
                 return this;
             }
             public Spec Limit(long rows)
             {
+                _cachedResult = null;
                 _limit = rows;
                 return this;
             }
             public Spec WithDocuments()
             {
+                _cachedResult = null;
                 _include_docs = true;
                 return this;
             }
             public Spec Group()
             {
+                _cachedResult = null;
                 _group = true;
                 return this;
             }
@@ -242,7 +254,7 @@ namespace RedBranch.Hammock
 
             public IEnumerator<TEntity> GetEnumerator()
             {
-                return Execute().Rows.Select(x => x.Entity).GetEnumerator();
+                return (_cachedResult ?? Execute()).Rows.Select(x => x.Entity).GetEnumerator();
             }
 
             public Spec Next()
