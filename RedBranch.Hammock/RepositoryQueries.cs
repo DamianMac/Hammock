@@ -33,6 +33,7 @@ namespace RedBranch.Hammock
     public interface ITertiaryOperator<TEntity, TKey> where TEntity : class
     {
         ITertiaryExpression<TEntity> Le(TKey value);
+        ITertiaryExpression<TEntity> Like(string value);
     }
 
     public interface ITertiaryExpression<TEntity> : IEnumerable<TEntity> where TEntity : class
@@ -134,6 +135,23 @@ namespace RedBranch.Hammock
                 return this;
             }
 
+            public ITertiaryExpression<TEntity> Like(string value)
+            {
+                if (null == value)
+                {
+                    throw new ArgumentNullException("value");
+                }
+                if (Values.HasLike)
+                {
+                    throw new InvalidOperationException("'Like' can appear only once in a query.");
+                }
+
+                Values.HasLike = true;
+                (Values.Startkey ?? (Values.Startkey = new JArray())).Add(value);
+                (Values.Endkey ?? (Values.Endkey = new JArray())).Add(value + "Z");
+                return this;
+            }
+
             public ITertiaryOperator<TEntity, TKey2> And<TKey2>(Expression<Func<TEntity, TKey2>> xp)
             {
                 return new TertiaryExpression<TKey2>(Values.AppendExpression(xp.Body));
@@ -183,6 +201,8 @@ namespace RedBranch.Hammock
             public JArray Startkey;
             public JArray Endkey;
 
+            public bool HasLike;
+
             public ExpressionValues AppendExpression(Expression x)
             {
                 var js = BuildJavasriptExpressionFromLinq(x);
@@ -201,14 +221,38 @@ namespace RedBranch.Hammock
                 a.Append("\n if (doc._id.indexOf('");
                 a.Append(typeof (TEntity).Name.ToLowerInvariant());
                 a.Append("-') === 0) {");
-                a.Append("\n  emit([doc");
-                a.Append(Fields[0]);
-                for (int n = 1; n < Fields.Count; n++)
+
+                var likeField = Fields.Last();
+                if (HasLike)
                 {
-                    a.Append(", doc");
-                    a.Append(Fields[n]);
+                    a.AppendFormat("\n  if (doc{0}) {{", likeField);
+                    a.AppendFormat("\n    for (var i=0; i<doc{0}.length; i++) {{", likeField);
+                    a.AppendFormat("\n      if (doc{0}.length - i > 2) {{", likeField);
+                }
+
+                a.Append("\n  emit([");
+                for (int n = 0; n < Fields.Count; n++)
+                {
+                    if (n > 0) a.Append(", ");
+                    if (HasLike && n == Fields.Count-1)
+                    {
+                        a.AppendFormat("doc{0}.substr(i)", likeField);
+                    }
+                    else
+                    {
+                        a.Append("doc");
+                        a.Append(Fields[n]);
+                    }
                 }
                 a.Append("], null);");
+                
+                if (HasLike)
+                {
+                    a.Append("\n      }");
+                    a.Append("\n    }");
+                    a.Append("\n  }");
+                }
+                
                 a.Append("\n }");
                 a.Append("\n}\n");
 
@@ -225,6 +269,10 @@ namespace RedBranch.Hammock
                     foreach (var c in f)
                     {
                         a.Append(char.IsLetter(c) ? char.ToLowerInvariant(c) : '-');
+                    }
+                    if (HasLike)
+                    {
+                        a.Append("-with-like");
                     }
                 }
                 var name = a.ToString();

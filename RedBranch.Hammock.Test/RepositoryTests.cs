@@ -46,6 +46,7 @@ namespace RedBranch.Hammock.Test
             _sx = _cx.CreateSession("relax-repository-tests");
             _sx2 = _cx.CreateSession("relax-repository-tests");
 
+            _sx.Save(new Gizmo { Name = "Widget", Cost = 30, Manufacturer = "ACME" });
             _sx.Save(new Gizmo { Name = "Gadget", Cost = 30, Manufacturer = "ACME" });
             _sx.Save(new Gizmo { Name = "Foo",    Cost = 35, Manufacturer = "ACME" });
             _sx.Save(new Gizmo { Name = "Bar",    Cost = 35, Manufacturer = "Widgetco" });
@@ -200,7 +201,7 @@ namespace RedBranch.Hammock.Test
         {
             var r = new Repository<Gizmo>(_sx);
             var z = r.Where(x => x.Cost).Le(35).List();
-            Assert.That(z.Rows.Length, Is.EqualTo(3));
+            Assert.That(z.Rows.Length, Is.EqualTo(4));
         }
 
         [Test]
@@ -216,8 +217,25 @@ namespace RedBranch.Hammock.Test
         {
             var r = new Repository<Gizmo>(_sx);
             var all = r.All();
-            Assert.That(all.Count(), Is.EqualTo(5));
+            Assert.That(all.Count(), Is.EqualTo(6));
         }
 
+        [Test]
+        public void Repository_can_query_by_like()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            var z = r.Where(x => x.Name).Like("dget").List();
+            Assert.That(z.Rows.Length, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Repository_query_like_must_appear_only_once()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            Assert.Throws<InvalidOperationException>(() => {
+                var z = r.Where(x => x.Name).Like("dget").And(x => x.Manufacturer).Like("foo").List();
+            });
+
+        }
     }
 }
