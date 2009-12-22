@@ -105,6 +105,16 @@ namespace RedBranch.Hammock
 
         public void DeleteDatabase(string database)
         {
+            // give a very short pause here, as there are some file locking issues
+            // in windows where the delete goes through before a previous file lock
+            // is released.
+            // http://issues.apache.org/jira/browse/COUCHDB-326
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT ||
+                Environment.OSVersion.Platform == PlatformID.Win32Windows)
+            {
+                System.Threading.Thread.Sleep(100);
+            }
+
             var request = (HttpWebRequest)WebRequest.Create(GetDatabaseLocation(database));
             request.Method = "DELETE";
             var response = request.GetCouchResponse();

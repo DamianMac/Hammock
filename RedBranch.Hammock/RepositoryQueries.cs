@@ -267,12 +267,14 @@ namespace RedBranch.Hammock
                 }
                 else
                 {
+                    a.Append("[");
                     for (int n=0; n<Returns.Count; n++)
                     {
                         if (n > 0) a.Append(", ");
                         a.Append("doc");
                         a.Append(Returns[n]);
                     }
+                    a.Append("]");
                 }
                 
                 a.Append(");");

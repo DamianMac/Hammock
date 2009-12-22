@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using RedBranch.Hammock.Design;
 
@@ -243,6 +244,18 @@ namespace RedBranch.Hammock.Test
             var r = new Repository<Gizmo>(_sx);
             var z = r.Where(x => x.Cost).Le(35).Returns(x => x.Name).List();
             Assert.That(z.Rows.All(x => x.Value != null), Is.True);
+        }
+
+        [Test]
+        public void Repository_query_can_return_multiple_values()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            var z = r
+                .Where(x => x.Cost).Le(35)
+                .Returns(x => x.Name)
+                .Returns(x => x.Cost)
+                .List();
+            Assert.That(z.Rows.All(x => (x.Value as JArray) != null), Is.True);
         }
     }
 }
