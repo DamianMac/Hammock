@@ -33,9 +33,14 @@ namespace RedBranch.Hammock
                          d.Revision == Revision;
         }
 
+        public static string Prefix<TEntity>()
+        {
+            return typeof (TEntity).Name.ToLowerInvariant();
+        }
+
         public static string For<TEntity>(string withId)
         {
-            return string.Format("{0}-{1}", typeof (TEntity).Name.ToLowerInvariant(), withId);
+            return string.Format("{0}-{1}", Prefix<TEntity>(), withId);
         }
     }
 

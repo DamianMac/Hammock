@@ -257,5 +257,45 @@ namespace RedBranch.Hammock.Test
                 .List();
             Assert.That(z.Rows.All(x => (x.Value as JArray) != null), Is.True);
         }
+
+        public class GizmoRepository : Repository<Gizmo>
+        {
+            public GizmoRepository(Session sx) : base(sx) {}
+
+            public Query<Gizmo> CustomView(string name)
+            {
+                return WithView(
+                    name,
+                    View.BasicMap<Gizmo>("emit(null, null);")
+                );
+            }
+
+            public Query<Gizmo> CustomView2(string name)
+            {
+                return WithView(
+                    name,
+                    View.BasicMap<Gizmo>("emit(doc._id, doc._id);")
+                );
+            }
+        }
+
+        [Test]
+        public void Repository_can_create_custom_view()
+        {
+            var r = new GizmoRepository(_sx);
+            r.CustomView("CustomView0");
+
+            Assert.That(r.Design.Views.ContainsKey("CustomView0"));
+        }
+
+        [Test]
+        public void Repository_can_update_existing_custom_view()
+        {
+            var r = new GizmoRepository(_sx);
+            r.CustomView("CustomView0");
+            r.CustomView2("CustomView0");
+
+            Assert.That(r.Design.Views["CustomView0"].Map.Contains("emit(doc._id, doc._id);"));
+        }
     }
 }

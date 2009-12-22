@@ -9,6 +9,8 @@ using RedBranch.Hammock.Design;
 
 namespace RedBranch.Hammock
 {
+    #region Adhoc Query Interfaces
+
     public interface IPrimayOperator<TEntity, TKey> : ISecondaryOperator<TEntity, TKey> where TEntity : class
     {
         IPrimaryExpression<TEntity> Eq(TKey value);
@@ -47,8 +49,12 @@ namespace RedBranch.Hammock
         TEntity SingleOrDefault();
     }
 
+    #endregion
+
     public partial class Repository<TEntity>
     {
+        #region Adhoc Query Implmentations
+
         private class PrimaryExpression<TKey> : SecondaryExpression<TKey>, IPrimayOperator<TEntity, TKey>, IPrimaryExpression<TEntity>
         {
             public PrimaryExpression(ExpressionValues values) : base(values)
@@ -333,6 +339,8 @@ namespace RedBranch.Hammock
             }
         }
 
+        #endregion
+
         private static string BuildJavasriptExpressionFromLinq(Expression x)
         {
             var js = "";
@@ -359,7 +367,34 @@ namespace RedBranch.Hammock
             throw new Exception("Unexptected state encountered parsing Repository.Where() expression.");
         }
 
-        public Query<TEntity> CreateView(string name, View v)
+        protected Query<TEntity> WithView(
+            string name, 
+            string map)
+        {
+            return WithView(name, map, null);
+        }
+
+        protected Query<TEntity> WithView(
+            string name, 
+            string map,
+            string reduce)
+        {
+            return WithView(name, new View {Map = map, Reduce = reduce});
+        }
+
+        protected Query<TEntity> WithView(
+            string name, 
+            View v)
+        {
+            if (!Design.Views.ContainsKey(name) ||
+                !Design.Views[name].Equals(v))
+            {
+                CreateView(name, v);
+            }
+            return Queries[name];
+        }
+
+        private Query<TEntity> CreateView(string name, View v)
         {
             Design.Views[name] = v;
             if (!Queries.ContainsKey(name))
