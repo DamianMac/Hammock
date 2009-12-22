@@ -235,7 +235,14 @@ namespace RedBranch.Hammock.Test
             Assert.Throws<InvalidOperationException>(() => {
                 var z = r.Where(x => x.Name).Like("dget").And(x => x.Manufacturer).Like("foo").List();
             });
+        }
 
+        [Test]
+        public void Repository_query_can_return_values()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            var z = r.Where(x => x.Cost).Le(35).Returns(x => x.Name).List();
+            Assert.That(z.Rows.All(x => x.Value != null), Is.True);
         }
     }
 }

@@ -39,6 +39,7 @@ namespace RedBranch.Hammock
     public interface ITertiaryExpression<TEntity> : IEnumerable<TEntity> where TEntity : class
     {
         ITertiaryOperator<TEntity, TKey> And<TKey>(Expression<Func<TEntity, TKey>> xp);
+        ITertiaryExpression<TEntity> Returns<TKey2>(Expression<Func<TEntity, TKey2>> xp);
 
         Query<TEntity>.Spec Spec();
         Query<TEntity>.Result List();
@@ -157,6 +158,13 @@ namespace RedBranch.Hammock
                 return new TertiaryExpression<TKey2>(Values.AppendExpression(xp.Body));
             }
 
+            public ITertiaryExpression<TEntity> Returns<TKey2>(Expression<Func<TEntity, TKey2>> xp)
+            {
+                Values.AppendReturns(xp.Body);
+                return this;
+            }
+
+
             public Query<TEntity>.Spec Spec()
             {
                 return Values.CreateQuerySpec(Values.CreateQuery());
@@ -198,6 +206,7 @@ namespace RedBranch.Hammock
         {
             public Repository<TEntity> Repository;
             public List<string> Fields;
+            public List<string> Returns;
             public JArray Startkey;
             public JArray Endkey;
 
@@ -211,6 +220,13 @@ namespace RedBranch.Hammock
                     throw new ArgumentException("Repository.Where() can accept a field only once. The field '" + x + "' appears more than once.");
                 }
                 Fields.Add(js);
+                return this;
+            }
+
+            public ExpressionValues AppendReturns(Expression x)
+            {
+                var js = BuildJavasriptExpressionFromLinq(x);
+                (Returns ?? (Returns = new List<string>())).Add(js);
                 return this;
             }
 
@@ -233,7 +249,6 @@ namespace RedBranch.Hammock
                 a.Append("\n  emit([");
                 for (int n = 0; n < Fields.Count; n++)
                 {
-                    if (n > 0) a.Append(", ");
                     if (HasLike && n == Fields.Count-1)
                     {
                         a.AppendFormat("doc{0}.substr(i)", likeField);
@@ -244,7 +259,23 @@ namespace RedBranch.Hammock
                         a.Append(Fields[n]);
                     }
                 }
-                a.Append("], null);");
+                a.Append("], ");
+
+                if (null == Returns)
+                {
+                    a.Append("null");
+                }
+                else
+                {
+                    for (int n=0; n<Returns.Count; n++)
+                    {
+                        if (n > 0) a.Append(", ");
+                        a.Append("doc");
+                        a.Append(Returns[n]);
+                    }
+                }
+                
+                a.Append(");");
                 
                 if (HasLike)
                 {
@@ -266,13 +297,18 @@ namespace RedBranch.Hammock
                 a.Append("by");
                 foreach (var f in Fields)
                 {
-                    foreach (var c in f)
-                    {
-                        a.Append(char.IsLetter(c) ? char.ToLowerInvariant(c) : '-');
-                    }
+                    a.Append(f.ToSlug());
                     if (HasLike)
                     {
                         a.Append("-with-like");
+                    }
+                }
+                if (null != Returns)
+                {
+                    a.Append("-with-values");
+                    foreach (var f in Returns)
+                    {
+                        a.Append(f.ToSlug());
                     }
                 }
                 var name = a.ToString();
@@ -314,7 +350,7 @@ namespace RedBranch.Hammock
                         break;
 
                     default:
-                        throw new NotSupportedException("Repository.Where() currently only parses simply fields/property descent expressions. You tried to use a " + x.NodeType + " expression.");
+                        throw new NotSupportedException("Repository.Where() currently only parses simply fields/property expressions. You tried to use a " + x.NodeType + " expression.");
                 }
             }
 
