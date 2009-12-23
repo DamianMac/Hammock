@@ -99,6 +99,28 @@ namespace RedBranch.Hammock
                 if (Offset + Rows.Length >= Total) return null;
                 return Spec.Next().Execute();
             }
+
+            private class __UniqueDocumentRowEqualityComparer : IEqualityComparer<Row>
+            {
+                public bool Equals(Row x, Row y)
+                {
+                    return String.Equals(x.Id, y.Id);
+                }
+
+                public int GetHashCode(Row obj)
+                {
+                    return obj.Id.GetHashCode();
+                }
+            }
+
+            /// <summary>
+            /// Returns only one Row for each unique document id in the result set.
+            /// </summary>
+            /// <returns></returns>
+            public IEnumerable<Row> GetUniqueDocumentRows()
+            {
+                return Rows.Distinct(new __UniqueDocumentRowEqualityComparer());
+            }
         }
 
         public class Spec : IEnumerable<TEntity>

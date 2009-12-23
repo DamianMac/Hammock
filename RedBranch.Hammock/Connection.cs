@@ -41,8 +41,11 @@ namespace RedBranch.Hammock
                     {
                         var serializer = new JsonSerializer();
                         var error = (__CouchError) serializer.Deserialize(reader, typeof (__CouchError));
-                        throw new CouchException((int) ((HttpWebResponse) e.Response).StatusCode, error.error,
-                                                 error.reason);
+                        throw CouchException.CreateException(
+                            request.RequestUri.ToString(),
+                            (int) ((HttpWebResponse) e.Response).StatusCode,
+                            error.error,
+                            error.reason);
                     }
                 }
                 else
@@ -55,14 +58,25 @@ namespace RedBranch.Hammock
 
     public class CouchException : Exception
     {
+        public string Url { get; private set; }
         public int Status { get; private set; }
-        public string Error { get; private set; }
+        public string Reason { get; private set; }
 
-        public CouchException(int status, string error, string reason)
-            : base(reason)
+        public static CouchException CreateException(string url, int status, string error, string reason)
         {
+            if (status == 404)
+            {
+                return new CouchException(url, status, "The resource could not be found (404).", reason);
+            }
+            return new CouchException(url, status, error, reason);
+        }
+
+        public CouchException(string url, int status, string error, string reason)
+            : base(error)
+        {
+            Url = url;
             Status = status;
-            Error = error;
+            Reason = reason;
         }
     }
 
