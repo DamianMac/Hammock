@@ -54,6 +54,7 @@
     <Compile Include="QueryTests.cs" />
     <Compile Include="RepositoryTests.cs" />
     <Compile Include="SessionTests.cs" />
+    <Compile Include="StringExtensionTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RedBranch.Hammock\RedBranch.Hammock.csproj">

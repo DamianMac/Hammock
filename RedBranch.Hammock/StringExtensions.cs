@@ -12,8 +12,12 @@ namespace RedBranch.Hammock
         {
             str = str.Substring(0, str.Length <= 45 ? str.Length : 45); // cut and trim it   
             str = str.ToLowerInvariant();
-            str = Regex.Replace(str, @"[^a-z0-9\s]", "-"); // invalid chars           
-            str = Regex.Replace(str, @"[-]+", "-"); // convert multiple spaces into one space   
+            str = Regex.Replace(str, @"[^a-z0-9]+", "-"); // invalid chars           
+            
+            // remove leading & trailing dashes
+            str = Regex.Replace(str, @"^[-]", "");
+            str = Regex.Replace(str, @"[-]$", "");
+
             return str;
         }
     }
