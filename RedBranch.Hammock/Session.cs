@@ -11,6 +11,22 @@ using RedBranch.Hammock.Design;
 
 namespace RedBranch.Hammock
 {
+    public enum Disposition
+    {
+        Continue,
+        Decline,
+    }
+
+    public interface IObserver
+    {
+        Disposition BeforeSave(object entity, Document document);
+        Disposition BeforeDelete(object entity, Document document);
+
+        void AfterSave(object entity, Document document);
+        void AfterDelete(object entity, Document document);
+        void AfterLoad(object entity, Document document);
+    }
+
     public partial class Session : IDisposable
     {
         private class __DocumentResponse
@@ -35,12 +51,18 @@ namespace RedBranch.Hammock
 
         private int _locks;
         private Dictionary<object, Document> _entities = new Dictionary<object, Document>(100);
+        private List<IObserver> _observers;
 
         public Session(Connection connection, string database)
         {
             InvalidDatabaseNameException.Validate(database);
             Connection = connection;
             Database = database;
+        }
+
+        public ICollection<IObserver> Observers
+        {
+            get { return _observers ?? (_observers = new List<IObserver>()); }
         }
 
         public IList<Document> List()
@@ -100,6 +122,15 @@ namespace RedBranch.Hammock
                 d.Session = this;
             }
 
+            // allow observers to veto the save
+            if (null != _observers)
+            {
+                if (_observers.Any(x => Disposition.Decline == x.BeforeSave(entity, d)))
+                {
+                    throw new Exception("An observer declined the save operation.");
+                }
+            }
+
             // send put            
             var request = (HttpWebRequest) WebRequest.Create(d.Location);
             request.Method = "PUT";
@@ -116,8 +147,15 @@ namespace RedBranch.Hammock
                 var response = (__DocumentResponse)serializer.Deserialize(reader, typeof(__DocumentResponse));
                 d = response.ToDocument(this);
             }
-                      
-            return UpdateEntityDocument(entity, d);
+            d = UpdateEntityDocument(entity, d);
+
+            // inform observers
+            if (null != _observers)
+            {
+                _observers.Each(x => x.AfterSave(entity, d));
+            }
+
+            return d;
         }
 
         private Document UpdateEntityDocument<TEntity>(TEntity entity, Document d) where TEntity : class
@@ -173,23 +211,41 @@ namespace RedBranch.Hammock
             {
                 var o = JToken.ReadFrom(reader);
 
-                var e = EntitySerializer.Read<TEntity>(o, ref d);
-                _entities[e] = d;
+                var entity = EntitySerializer.Read<TEntity>(o, ref d);
+                _entities[entity] = d;
 
-                return e;
+                // inform observers
+                if (null != _observers)
+                {
+                    _observers.Each(x => x.AfterLoad(entity, d));
+                }
+
+                return entity;
             }
         }
 
         public void Delete<TEntity>(TEntity entity) where TEntity : class
         {
+            // locate the document
             if (!_entities.ContainsKey(entity))
             {
                 throw new IndexOutOfRangeException("The entity is not currently enrolled in this session.");
             }
-            var e = _entities[entity];
-            var request = (HttpWebRequest)WebRequest.Create(e.Location);
+            var d = _entities[entity];
+
+            // allow observers to veto the delete
+            if (null != _observers)
+            {
+                if (_observers.Any(x => Disposition.Decline == x.BeforeDelete(entity, d)))
+                {
+                    throw new Exception("An observer declined the delete operation.");
+                }
+            }
+
+            // delete
+            var request = (HttpWebRequest)WebRequest.Create(d.Location);
             request.Method = "DELETE";
-            request.Headers[HttpRequestHeader.IfMatch] = e.Revision;
+            request.Headers[HttpRequestHeader.IfMatch] = d.Revision;
             using (var reader = request.GetCouchResponse())
             {
                 var serializer = new JsonSerializer();
@@ -202,6 +258,12 @@ namespace RedBranch.Hammock
                 {
                     throw new Exception();
                 }
+            }
+
+            // inform observers
+            if (null != _observers)
+            {
+                _observers.Each(x => x.AfterDelete(entity, d));
             }
         }
 
