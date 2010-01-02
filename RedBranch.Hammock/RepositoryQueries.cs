@@ -305,6 +305,7 @@ namespace RedBranch.Hammock
                 a.Append("by");
                 foreach (var f in Fields)
                 {
+                    a.Append('-');
                     a.Append(f.ToSlug());
                     if (HasLike)
                     {
