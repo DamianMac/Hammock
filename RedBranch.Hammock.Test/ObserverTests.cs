@@ -163,5 +163,14 @@ namespace RedBranch.Hammock.Test
             Assert.Throws<Exception>(() => sx.Delete(w));
             Assert.That(o.TimesAfterDeleteCalled, Is.EqualTo(0));
         }
+
+        [Test]
+        public void Connection_fills_session_observers()
+        {
+            var cx = ConnectionTests.CreateConnection();
+            cx.Observers.Add(x => new MockObserver());
+            var sx = cx.CreateSession("relax-observer-tests");
+            Assert.That(sx.Observers.Count, Is.EqualTo(1));
+        }
     }
 }

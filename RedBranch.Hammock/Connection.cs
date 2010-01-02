@@ -48,10 +48,7 @@ namespace RedBranch.Hammock
                             error.reason);
                     }
                 }
-                else
-                {
-                    throw;   
-                }
+                throw;
             }
         }
     }
@@ -84,13 +81,19 @@ namespace RedBranch.Hammock
     {
         public Connection(Uri location)
         {
-            this.Location = location;
+            Location = location;
         }
 
         public Uri Location { get; private set; }
         public string Version { get; set; }
 
         private Dictionary<string, List<Session>> _sessions = new Dictionary<string, List<Session>>();
+        private List<Func<Connection, IObserver>> _observerFactories;
+
+        public ICollection<Func<Connection, IObserver>> Observers
+        {
+            get { return _observerFactories ?? (_observerFactories = new List<Func<Connection, IObserver>>()); }
+        }
 
         public string GetDatabaseLocation(string database)
         {
@@ -146,7 +149,12 @@ namespace RedBranch.Hammock
                     return s;
                 }
             }
-            return new Session(this, database);
+            var sx = new Session(this, database);
+            if (null != _observerFactories && _observerFactories.Count > 0)
+            {
+                _observerFactories.Each(x => sx.Observers.Add(x(this)));
+            }
+            return sx;
         }
 
         public void ReturnSession(Session sx)
