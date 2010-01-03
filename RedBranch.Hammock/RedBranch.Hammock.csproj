@@ -52,6 +52,7 @@
     <Compile Include="Document.cs" />
     <Compile Include="EntitySerializer.cs" />
     <Compile Include="InvalidDatabaseNameException.cs" />
+    <Compile Include="Observer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Query.cs" />
     <Compile Include="Repository.cs" />

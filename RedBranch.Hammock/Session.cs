@@ -11,22 +11,6 @@ using RedBranch.Hammock.Design;
 
 namespace RedBranch.Hammock
 {
-    public enum Disposition
-    {
-        Continue,
-        Decline,
-    }
-
-    public interface IObserver
-    {
-        Disposition BeforeSave(object entity, Document document);
-        Disposition BeforeDelete(object entity, Document document);
-
-        void AfterSave(object entity, Document document);
-        void AfterDelete(object entity, Document document);
-        void AfterLoad(object entity, Document document);
-    }
-
     public partial class Session : IDisposable
     {
         private class __DocumentResponse
