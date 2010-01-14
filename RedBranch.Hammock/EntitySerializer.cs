@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace RedBranch.Hammock
 {
-    class EntitySerializer
+    public class EntitySerializer
     {
         public static TEntity Read<TEntity>(
             JToken data,

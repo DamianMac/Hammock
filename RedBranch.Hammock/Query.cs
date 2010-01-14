@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Web;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -248,12 +249,12 @@ namespace RedBranch.Hammock
                 }
                 if (null != _start_key)
                 {
-                    location.AppendFormat("{0}startkey={1}", sep, _start_key.ToString(Formatting.None));
+                    location.AppendFormat("{0}startkey={1}", sep, HttpUtility.UrlEncode(_start_key.ToString(Formatting.None)));
                     sep = '&';
                 }
                 if (null != _end_key)
                 {
-                    location.AppendFormat("{0}endkey={1}", sep, _end_key.ToString(Formatting.None));
+                    location.AppendFormat("{0}endkey={1}", sep, HttpUtility.UrlEncode(_end_key.ToString(Formatting.None)));
                     sep = '&';
                 }
                 if (null != _startkey_docid)

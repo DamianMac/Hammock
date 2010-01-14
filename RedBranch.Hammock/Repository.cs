@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
 using System.Text;
 using System.Web;
 using RedBranch.Hammock.Design;
@@ -16,8 +17,11 @@ namespace RedBranch.Hammock
         void Delete(TEntity entity);
         IPrimayOperator<TEntity, TKey> Where<TKey>(Expression<Func<TEntity, TKey>> xp);
         Query<TEntity>.Spec All();
+
+        void Attach(TEntity entity, string filename, HttpWebResponse response);
         void Attach(TEntity entity, HttpPostedFileBase file);
         void Attach(TEntity entity, string filename, string contentType, Stream data);
+        void Attach(TEntity entity, string filename, string contentType, long contentLength, Stream data);
     }
 
     public partial class Repository<TEntity> : IRepository<TEntity> where TEntity : class
@@ -84,6 +88,10 @@ namespace RedBranch.Hammock
             Session.Delete(entity);
         }
 
+        public void Attach(TEntity entity, string filename, HttpWebResponse response)
+        {
+            Session.AttachFile(entity, filename, response);
+        }
         public void Attach(TEntity entity, HttpPostedFileBase file)
         {
             Session.AttachFile(entity, file);
@@ -94,5 +102,9 @@ namespace RedBranch.Hammock
             Session.AttachFile(entity, filename, contentType, data);
         }
 
+        public void Attach(TEntity entity, string filename, string contentType, long contentLength, Stream data)
+        {
+            Session.AttachFile(entity, filename, contentType, contentLength, data);
+        }
     }
 }

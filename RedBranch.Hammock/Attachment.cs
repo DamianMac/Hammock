@@ -37,16 +37,44 @@ namespace RedBranch.Hammock
             // get couch reply
             return (HttpWebResponse)request.GetResponse();
         }
+
+        public Stream LoadStream()
+        {
+            return Load().GetResponseStream();
+        }
+
+        public byte[] LoadBytes()
+        {
+            using (var stream = LoadStream())
+            {
+                var buf = new byte[stream.Length];
+                stream.Read(buf, 0, buf.Length);
+                return buf;
+            }
+        }
     }
 
     public partial class Session
     {
+        public Document AttachFile<TEntity>(TEntity entity, string filename, HttpWebResponse response) where TEntity : class
+        {
+            using (var stream = response.GetResponseStream())
+            {
+                return AttachFile(entity, filename, response.ContentType, response.ContentLength, stream);
+            }
+        }
+
         public Document AttachFile<TEntity>(TEntity entity, HttpPostedFileBase file) where TEntity : class
         {
-            return AttachFile(entity, file.FileName, file.ContentType, file.InputStream);
+            return AttachFile(entity, file.FileName, file.ContentType, file.ContentLength, file.InputStream);
         }
 
         public Document AttachFile<TEntity>(TEntity entity, string filename, string contentType, Stream data) where TEntity : class
+        {
+            return AttachFile(entity, filename, contentType, data.CanSeek ? data.Length : -1, data);
+        }
+
+        public Document AttachFile<TEntity>(TEntity entity, string filename, string contentType, long contentLength, Stream data) where TEntity : class
         {
             var withattachments = entity as IHasAttachments;
             if (null == withattachments)
@@ -60,15 +88,33 @@ namespace RedBranch.Hammock
             }
             var d = _entities[entity];
 
+            byte[] buf = null;
+            if (contentLength >= 0)
+            {
+                buf = new byte[contentLength];
+                data.Read(buf, 0, buf.Length);
+            }
+            else
+            {
+                // no content length, so read the input stream to the end
+                var x = new byte[1024];
+                var ms = new MemoryStream();
+                var count = 0;
+                while (0 < (count = data.Read(x, 0, x.Length)))
+                {
+                    ms.Write(x, 0, count);
+                }
+
+                buf = ms.ToArray();
+            }
+
             // send the attachment
             var request = (HttpWebRequest) WebRequest.Create(
                 String.Format("{0}/{1}?rev={2}", d.Location, filename, d.Revision)
             );
             request.Method = "PUT";
             request.ContentType = contentType;
-            request.ContentLength = data.Length;
-            var buf = new byte[data.Length];
-            data.Read(buf, 0, buf.Length);
+            request.ContentLength = buf.Length;
             using (var output = request.GetRequestStream())
             {
                 output.Write(buf, 0, buf.Length);
