@@ -47,10 +47,27 @@ namespace RedBranch.Hammock
         {
             using (var stream = LoadStream())
             {
-                var buf = new byte[stream.Length];
-                stream.Read(buf, 0, buf.Length);
-                return buf;
+                return SafeReadStream(stream);
             }
+        }
+
+        /// <summary>
+        /// Reads a stream without relying on the stream length. This is the only safe way
+        /// to read an http response stream.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public static byte[] SafeReadStream(Stream s)
+        {
+            var x = new byte[1024];
+            var ms = new MemoryStream();
+            var count = 0;
+            while (0 < (count = s.Read(x, 0, x.Length)))
+            {
+                ms.Write(x, 0, count);
+            }
+
+            return ms.ToArray();
         }
     }
 
@@ -96,16 +113,7 @@ namespace RedBranch.Hammock
             }
             else
             {
-                // no content length, so read the input stream to the end
-                var x = new byte[1024];
-                var ms = new MemoryStream();
-                var count = 0;
-                while (0 < (count = data.Read(x, 0, x.Length)))
-                {
-                    ms.Write(x, 0, count);
-                }
-
-                buf = ms.ToArray();
+                buf = Attachment.SafeReadStream(data);
             }
 
             // send the attachment
