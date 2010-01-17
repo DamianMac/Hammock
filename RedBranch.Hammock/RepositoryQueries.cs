@@ -194,7 +194,7 @@ namespace RedBranch.Hammock
             public TEntity SingleOrDefault()
             {
                 var result = Spec().WithDocuments().Execute();
-                return result.Total == 0 ? null : result.Rows.First().Entity;
+                return result.Rows.Length == 0 ? null : result.Rows.First().Entity;
             }
 
             public IEnumerator<TEntity> GetEnumerator()
