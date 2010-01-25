@@ -214,6 +214,16 @@ namespace RedBranch.Hammock.Test
         }
 
         [Test]
+        public void Repository_can_with_and()
+        {
+            var r = new Repository<Gizmo>(_sx);
+            var z = r.Where(x => x.Manufacturer).Eq("ACME")
+                     .And(x => x.Cost).Bw(35, 45)
+                     .List();
+            Assert.That(z.Rows.Length, Is.EqualTo(1));
+        }
+
+        [Test]
         public void Repository_can_list_all_entities()
         {
             var r = new Repository<Gizmo>(_sx);

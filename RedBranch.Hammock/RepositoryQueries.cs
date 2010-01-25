@@ -255,6 +255,7 @@ namespace RedBranch.Hammock
                 a.Append("\n  emit([");
                 for (int n = 0; n < Fields.Count; n++)
                 {
+                    if (n > 0) a.Append(", ");
                     if (HasLike && n == Fields.Count-1)
                     {
                         a.AppendFormat("doc{0}.substr(i)", likeField);
