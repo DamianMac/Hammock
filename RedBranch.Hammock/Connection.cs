@@ -89,6 +89,7 @@ namespace RedBranch.Hammock
 
         private Dictionary<string, List<Session>> _sessions = new Dictionary<string, List<Session>>();
         private List<Func<Connection, IObserver>> _observerFactories;
+        private string[] _databases;
 
         public ICollection<Func<Connection, IObserver>> Observers
         {
@@ -104,13 +105,24 @@ namespace RedBranch.Hammock
 
         public string[] ListDatabases()
         {
+            return ListDatabases(false);
+        }
+
+        public string[] ListDatabases(bool cached)
+        {
+            if (cached && null != _databases)
+            {
+                return _databases;
+            }
+
             var u = new Uri(Location, "_all_dbs");
             var request = (HttpWebRequest)WebRequest.Create(u);
             using (var reader = request.GetCouchResponse())
             {
                 var serializer = new JsonSerializer();
-                return (string[])serializer.Deserialize(reader, typeof(string[]));
+                _databases = (string[])serializer.Deserialize(reader, typeof(string[]));
             }
+            return _databases;
         }
 
         public void CreateDatabase(string database)
@@ -118,6 +130,7 @@ namespace RedBranch.Hammock
             var request = (HttpWebRequest)WebRequest.Create(GetDatabaseLocation(database));
             request.Method = "PUT";
             var response = request.GetCouchResponse();
+            _databases = null;
         }
 
         public void DeleteDatabase(string database)
@@ -135,6 +148,7 @@ namespace RedBranch.Hammock
             var request = (HttpWebRequest)WebRequest.Create(GetDatabaseLocation(database));
             request.Method = "DELETE";
             var response = request.GetCouchResponse();
+            _databases = null;
         }
 
         public Session CreateSession(string database)
