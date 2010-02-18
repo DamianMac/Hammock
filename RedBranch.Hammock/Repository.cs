@@ -22,6 +22,7 @@ namespace RedBranch.Hammock
         void Attach(TEntity entity, HttpPostedFileBase file);
         void Attach(TEntity entity, string filename, string contentType, Stream data);
         void Attach(TEntity entity, string filename, string contentType, long contentLength, Stream data);
+        TEntity TryGet(string id);
     }
 
     public partial class Repository<TEntity> : IRepository<TEntity> where TEntity : class
@@ -76,6 +77,18 @@ namespace RedBranch.Hammock
         public TEntity Get(string id)
         {
             return Session.Load<TEntity>(id);
+        }
+
+        public TEntity TryGet(string id)
+        {
+            try
+            {
+                return Get(id);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public Document Save(TEntity entity)

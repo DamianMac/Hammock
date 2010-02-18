@@ -170,7 +170,6 @@ namespace RedBranch.Hammock
                 return this;
             }
 
-
             public Query<TEntity>.Spec Spec()
             {
                 return Values.CreateQuerySpec(Values.CreateQuery());
