@@ -134,6 +134,7 @@ namespace RedBranch.Hammock
             bool _group;
             long? _skip;
             long? _limit;
+            bool _descending;
             JToken _start_key;
             JToken _end_key;
             string _startkey_docid;
@@ -202,6 +203,16 @@ namespace RedBranch.Hammock
                 _limit = rows;
                 return this;
             }
+            public Spec Descending()
+            {
+                _descending = true;
+                return this;
+            }
+            public Spec Descending(bool descending)
+            {
+                _descending = descending;
+                return this;
+            }
             public Spec WithDocuments()
             {
                 _cachedResult = null;
@@ -245,6 +256,11 @@ namespace RedBranch.Hammock
                 if (null != _limit && _limit >= 0)
                 {
                     location.AppendFormat("{0}limit={1}", sep, _limit);
+                    sep = '&';
+                }
+                if (_descending)
+                {
+                    location.AppendFormat("{0}descending=true", sep);
                     sep = '&';
                 }
                 if (null != _start_key)
