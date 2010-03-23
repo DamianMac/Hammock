@@ -148,7 +148,8 @@ namespace RedBranch.Hammock
                             Length = buf.Length,
                             Stub = true,
                         };
-            (withattachments.Attachments ?? (withattachments.Attachments = new Attachments())).Add(filename, a);
+            var attachments = (withattachments.Attachments ?? (withattachments.Attachments = new Attachments()));
+            attachments[filename] = a;
 
             return d;
         }
