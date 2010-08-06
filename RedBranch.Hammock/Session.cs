@@ -49,26 +49,98 @@ namespace RedBranch.Hammock
             get { return _observers ?? (_observers = new List<IObserver>()); }
         }
 
-        public IList<Document> List()
+        /// <summary>
+        /// Lists all documents in this session's database using the _all_docs view.
+        /// </summary>
+        /// <returns></returns>
+        public IList<Document> ListDocuments()
         {
-            var request = (HttpWebRequest)WebRequest.Create(Connection.GetDatabaseLocation(Database) + "_all_docs");
+            var q = new AllDocumentsQuery(this);
+            var r = q.All().Execute();
+            return r.Rows.Select(x => new Document {
+                Id = x.Id,
+                Revision = x.Value.Value<string>("rev")
+            }).ToList();
+        }
+
+        /// <summary>
+        /// Lists all entity data in this session's database, returning the full document
+        /// for each entity. This is an expensive operation and should be used carefully.
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>
+        /// Unlike all other methods of retrieving an entity, the data returned by this
+        /// method bypasses the enrollment system.
+        /// </remarks>
+        public IList<JToken> ListEntities()
+        {
+            return new AllDocumentsQuery(this).All().WithDocuments().ToList();
+        }
+
+        /// <summary>
+        /// Loads the raw json for an entity from the database.
+        /// </summary>
+        /// <param name="id">The id of the entity to load.</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// This Load override completely bypasses the standard enrollment system that
+        /// typed versions of Load use, and can easily cause version conflicts if mis-used.
+        /// </remarks>
+        public JToken LoadRaw(string id)
+        {
+            var d = new Document
+            {
+                Session = this,
+                Id = id,
+            };
+            var request = (HttpWebRequest)WebRequest.Create(d.Location);
             using (var reader = request.GetCouchResponse())
             {
-                var a = new List<Document>();
-                var o = JObject.Load(reader);
-                var rows = o["rows"];
-                foreach (JObject r in rows)
-                {
-                    a.Add(new Document()
-                              {
-                                  Id = r.Value<string>("id"),
-                                  Revision = r["value"].Value<string>("rev")
-                              });
-                }
-                return a;
+                return JToken.ReadFrom(reader);
             }
         }
-        
+
+        /// <summary>
+        /// Saves the raw json entity to the database. Entity must have an _id property, and
+        /// must have a _rev property if it will update an existing entity.
+        /// </summary>
+        /// <param name="entity">The entity to save.</param>
+        /// <remarks>
+        /// This Save override completely bypasses the standard enrollment system that typed
+        /// versions of Save use, and can easily cause version conflicts if mis-used.
+        /// </remarks>
+        public Document SaveRaw(JToken entity)
+        {
+            // read the id from the entity
+            var d = new Document {
+                Session = this,
+                Id = entity.Value<string>("_id"),
+            };
+
+            // send put            
+            var request = (HttpWebRequest)WebRequest.Create(d.Location);
+            request.Method = "PUT";
+            using (var writer = new JsonTextWriter(new StreamWriter(request.GetRequestStream())))
+            {
+                entity.WriteTo(writer);
+            }
+
+            // get couch reply
+            using (var reader = request.GetCouchResponse())
+            {
+                var serializer = new JsonSerializer();
+                var response = (__DocumentResponse)serializer.Deserialize(reader, typeof(__DocumentResponse));
+                d = response.ToDocument(this);
+            }
+            var o = entity as JObject;
+            if (null != o)
+            {
+                o["_rev"] = new JValue(d.Revision);
+            }
+
+            return d;
+        }
+
         public Document Save<TEntity>(TEntity entity, string id) where TEntity : class
         {
             if (_entities.ContainsKey(entity))
@@ -251,16 +323,34 @@ namespace RedBranch.Hammock
             }
         }
 
+        /// <summary>
+        /// Determines whether an entity with the given id is enrolled into this Session.
+        /// </summary>
+        /// <param name="id">The document id to search for.</param>
+        /// <returns>True, if an entity with the given id is enrolled, or false if it is not.</returns>
         public bool IsEnrolled(string id)
         {
             return _entities.Where(x => x.Value.Id == id).Count() == 1;
         }
 
+        /// <summary>
+        /// Determines whether the given entity is enrolled into this Session.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of entity to search for.</typeparam>
+        /// <param name="entity">The entity to search for.</param>
+        /// <returns>True, if the given entity is enrolled, or false if it is not.</returns>
         public bool IsEnrolled<TEntity>(TEntity entity) where TEntity : class
         {
             return _entities.ContainsKey(entity);
         }
 
+        /// <summary>
+        /// Enrolls a given entity in this Session, using the suppied document.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of entity to enroll.</typeparam>
+        /// <param name="d">The document that will be associated with the entity when it is enrolled.</param>
+        /// <param name="entity">The entity to enroll.</param>
+        /// <exception cref="System.Exception">Thrown if the any entity is already enrolled using the given document.</exception>
         public void Enroll<TEntity>(Document d, TEntity entity) where TEntity : class
         {
             if (IsEnrolled(d.Id))
@@ -270,11 +360,27 @@ namespace RedBranch.Hammock
             _entities.Add(entity, d);
         }
 
+        /// <summary>
+        /// Flushes all non-design documents from this Session. Sessions retrieved through the 
+        /// Connection object are automatically Reset() for you.
+        /// </summary>
+        /// <remarks>
+        /// When calling Reset() manually, take care that you do not hold any references to entities retrieved
+        /// through the Session, as any attempt to Update() or Delete() them will result in exceptions.
+        /// </remarks>
         public void Reset()
         {
             _entities = _entities.Where(x => x.Value.Id.StartsWith("_design/")).ToDictionary(x => x.Key, x => x.Value);
         }
 
+        /// <summary>
+        /// Increments the reference count for this Session, ensuring that the Session will not be recycled
+        /// back to the owning Connection's available Session pool until the lock is disposed.
+        /// </summary>
+        /// <remarks>
+        /// See http://code.google.com/p/relax-net/wiki/SessionPooling for details.
+        /// </remarks>
+        /// <returns></returns>
         public IDisposable Lock()
         {
             Interlocked.Increment(ref _locks);

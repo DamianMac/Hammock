@@ -59,16 +59,21 @@ namespace RedBranch.Hammock
             return e;
         }
 
-        public static JToken Write<TEntity>(
-            TEntity e,
-            Document d)
+        public static JToken WriteFragment(object o)
         {
             // serialize the entity
             var serializer = new JsonSerializer();
             serializer.NullValueHandling = NullValueHandling.Ignore;
             var jwriter = new JTokenWriter();
-            serializer.Serialize(jwriter, e);
-            var o = (JObject)jwriter.Token;
+            serializer.Serialize(jwriter, o);
+            return jwriter.Token;
+        }
+
+        public static JToken Write<TEntity>(
+            TEntity e,
+            Document d)
+        {
+            var o = (JObject)WriteFragment(e);
             
             // add document info
             var icanhasdoc = e as IHasDocument;
@@ -86,9 +91,7 @@ namespace RedBranch.Hammock
             var ihasattachments = e as IHasAttachments;
             if (null != ihasattachments && null != ihasattachments.Attachments)
             {
-                var jwriter2 = new JTokenWriter();
-                serializer.Serialize(jwriter2, ihasattachments.Attachments);
-                o.Add("_attachments", jwriter2.Token);
+                o.Add("_attachments", WriteFragment(ihasattachments.Attachments));
             }
 
             return o;

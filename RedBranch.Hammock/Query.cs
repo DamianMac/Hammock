@@ -33,7 +33,8 @@ namespace RedBranch.Hammock
                 public string Id { get; set; }
                 public JToken Key { get; set; }
                 public JToken Value { get; set; }
-                
+                public JToken Data { get; set; }
+
                 public TEntity Entity
                 {
                     get
@@ -52,12 +53,12 @@ namespace RedBranch.Hammock
                                 // we have a full document inline, but we might need to return one
                                 // from the session if this docid is already enrolled, otherwise
                                 // we enroll it now using the data from this row
-                                var d = new Document
-                                  {
-                                      Session = Query.Session,
-                                      Id = (string) _data["_id"],
-                                      Revision = (string) _data["_rev"]
-                                  };
+                                var d =  new Document
+                                {
+                                    Session = Query.Session,
+                                    Id = (string)_data["_id"],
+                                    Revision = (string)_data["_rev"]
+                                };
                                 if (Query.Session.IsEnrolled(d.Id))
                                 {
                                     _entity = Query.Session.Load<TEntity>(d.Id);
@@ -228,59 +229,67 @@ namespace RedBranch.Hammock
 
             public override string ToString()
             {
-                var location = new StringBuilder(
-                    Query.Session.Connection.GetDatabaseLocation(
-                        Query.Session.Database));
-
-                location.Append("_design/");
-                location.Append(Query.Design);
-                location.Append("/_view/");
-                location.Append(Query.View);
+                var location = new StringBuilder(Query.Location);
 
                 var sep = '?';
                 if (_group)
                 {
-                    location.AppendFormat("{0}group=true", sep);
+                    location.Append(sep);
+                    location.Append("group=true");
                     sep = '&';
                 }
                 if (_include_docs)
                 {
-                    location.AppendFormat("{0}include_docs=true", sep);
+                    location.Append(sep);
+                    location.Append("include_docs=true");
                     sep = '&';
                 }
                 if (null != _skip && _skip > 0)
                 {
-                    location.AppendFormat("{0}skip={1}", sep, _skip);
+                    location.Append(sep);
+                    location.Append("skip=");
+                    location.Append(_skip);
                     sep = '&';
                 }
                 if (null != _limit && _limit >= 0)
                 {
-                    location.AppendFormat("{0}limit={1}", sep, _limit);
+                    location.Append(sep);
+                    location.Append("limit=");
+                    location.Append(_limit);
                     sep = '&';
                 }
                 if (_descending)
                 {
-                    location.AppendFormat("{0}descending=true", sep);
+                    location.Append(sep);
+                    location.Append("descending=true");
                     sep = '&';
                 }
                 if (null != _start_key)
                 {
-                    location.AppendFormat("{0}startkey={1}", sep, HttpUtility.UrlEncode(_start_key.ToString(Formatting.None)));
+                    location.Append(sep);
+                    location.Append("startkey=");
+                    location.Append(HttpUtility.UrlEncode(_start_key.ToString(Formatting.None)));
                     sep = '&';
                 }
                 if (null != _end_key)
                 {
-                    location.AppendFormat("{0}endkey={1}", sep, HttpUtility.UrlEncode(_end_key.ToString(Formatting.None)));
+                    location.Append(sep);
+                    location.Append("endkey=");
+                    location.Append(HttpUtility.UrlEncode(_end_key.ToString(Formatting.None)));
                     sep = '&';
                 }
                 if (null != _startkey_docid)
                 {
-                    location.AppendFormat("{0}startkey_docid={1}", sep, _startkey_docid);
+                    location.Append(sep);
+                    location.Append("startkey_docid=");
+                    location.Append(_startkey_docid);
                     sep = '&';
                 }
                 if (null != _endkey_docid)
                 {
-                    location.AppendFormat("{0}endkey_docid={1}", sep, _endkey_docid);
+                    location.Append(sep);
+                    location.Append("endkey_docid=");
+                    location.Append(_endkey_docid);
                     sep = '&';
                 }
                 return location.ToString();
@@ -319,6 +328,23 @@ namespace RedBranch.Hammock
         public string View { get; private set; }
         public bool Group { get; private set; }
 
+        public virtual string Location
+        {
+            get
+            {
+                var location = new StringBuilder(
+                    Session.Connection.GetDatabaseLocation(
+                        Session.Database));
+
+                location.Append("_design/");
+                location.Append(Design);
+                location.Append("/_view/");
+                location.Append(View);
+
+                return location.ToString();
+            }
+        }
+
         public Query(Session sx, string design, string view)
             : this(sx, design, view, false)
         {
@@ -353,6 +379,27 @@ namespace RedBranch.Hammock
         public Spec Limit(long rows)
         {
             return All().Limit(rows);
+        }
+    }
+
+    public class AllDocumentsQuery : Query<JToken>
+    {
+        public AllDocumentsQuery(Session sx) : base(sx, null, null, false)
+        {
+        }
+
+        public override string Location
+        {
+            get
+            {
+                var location = new StringBuilder(
+                    Session.Connection.GetDatabaseLocation(
+                        Session.Database));
+
+                location.Append("_all_docs");
+
+                return location.ToString();
+            }
         }
     }
 }

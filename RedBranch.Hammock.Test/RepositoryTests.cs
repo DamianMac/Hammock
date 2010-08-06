@@ -82,7 +82,7 @@ namespace RedBranch.Hammock.Test
             var r = new Repository<Widget>(_sx);
             r.Delete(w);
 
-            Assert.IsFalse(_sx.List().Any(x => x.Id == doc.Id));
+            Assert.IsFalse(_sx.ListDocuments().Any(x => x.Id == doc.Id));
         }
 
         [Test]
@@ -92,7 +92,7 @@ namespace RedBranch.Hammock.Test
             var r = new Repository<Widget>(_sx);
             var doc = r.Save(w);
 
-            Assert.IsTrue(_sx.List().Any(x => x.Id == doc.Id));
+            Assert.IsTrue(_sx.ListDocuments().Any(x => x.Id == doc.Id));
         }
 
         [Test]

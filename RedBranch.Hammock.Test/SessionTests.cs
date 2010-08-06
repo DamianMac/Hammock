@@ -46,7 +46,7 @@ namespace RedBranch.Hammock.Test
         [Test]
         public void Can_list_documents()
         {
-            var ids = _sx.List();
+            var ids = _sx.ListDocuments();
             Assert.IsNotNull(ids);
         }
 
@@ -55,7 +55,7 @@ namespace RedBranch.Hammock.Test
         {
             var w = new Widget {Name = "sproket", Tags = new[] {"big", "small"}};
             var doc = _sx.Save(w);
-            Assert.IsTrue(_sx.List().Any(x => x.Id == doc.Id && x.Revision == doc.Revision));
+            Assert.IsTrue(_sx.ListDocuments().Any(x => x.Id == doc.Id && x.Revision == doc.Revision));
         }
 
         [Test]
@@ -64,7 +64,7 @@ namespace RedBranch.Hammock.Test
             var w = new Widget { Name = "sproket", Tags = new[] { "big", "small" } };
             var doc = _sx.Save(w);
             _sx.Delete(w);
-            Assert.IsFalse(_sx.List().Any(x => x.Id == doc.Id && x.Revision == doc.Revision));
+            Assert.IsFalse(_sx.ListDocuments().Any(x => x.Id == doc.Id && x.Revision == doc.Revision));
         }
 
         [Test]
@@ -87,12 +87,12 @@ namespace RedBranch.Hammock.Test
         [Test]
         public void Can_update_loaded_entity()
         {
-            var x = _sx.List();
+            var x = _sx.ListDocuments();
             var w = _sx.Load<Widget>(_doc.Id);
             w.Name = new string(w.Name.Reverse().ToArray());
             _sx.Save(w);
 
-            var y = _sx.List();
+            var y = _sx.ListDocuments();
             Assert.AreEqual(x.Count, y.Count);
             Assert.AreNotEqual(
                 x.First(z => z.Id == _doc.Id).Revision,
@@ -112,7 +112,7 @@ namespace RedBranch.Hammock.Test
         {
             var d = new DesignDocument { Language = "javascript" };
             _sx.Save(d, "_design/foo");
-            Assert.True(_sx.List().Any(x => x.Id == "_design/foo"));
+            Assert.True(_sx.ListDocuments().Any(x => x.Id == "_design/foo"));
         }
 
         [Test]
@@ -139,7 +139,7 @@ namespace RedBranch.Hammock.Test
             var d = _sx.Load<DesignDocument>("_design/baz");
             _sx.Delete(d);
 
-            Assert.IsFalse(_sx.List().Any(x => x.Id == "_design/baz"));
+            Assert.IsFalse(_sx.ListDocuments().Any(x => x.Id == "_design/baz"));
         }
 
         [Test]
