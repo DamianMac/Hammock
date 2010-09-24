@@ -141,11 +141,19 @@ namespace RedBranch.Hammock
             return d;
         }
 
+        private Document SafeGetDocument(object entity)
+        {
+            lock (_entities)
+            {
+                return _entities.ContainsKey(entity) ? _entities[entity] : null;
+            }
+        }
+
         public Document Save<TEntity>(TEntity entity, string id) where TEntity : class
         {
-            if (_entities.ContainsKey(entity))
+            var d = SafeGetDocument(entity);
+            if (null != d)
             {
-                var d = _entities[entity];
                 if (d.Id != id)
                 {
                     throw new Exception("This entity is already saved under the id '" + d.Id + "' and cannot be reassigned the new id '" + id + "' in this session.");
@@ -157,10 +165,8 @@ namespace RedBranch.Hammock
             
         public Document Save<TEntity>(TEntity entity) where TEntity : class
         {
-            var d =
-                _entities.ContainsKey(entity)
-                    ? _entities[entity]
-                    : (entity as Document) ?? 
+            var d = SafeGetDocument(entity) ??
+                      (entity as Document) ?? 
                       (entity is IHasDocument ? ((IHasDocument)entity).Document : null) ??
                       new Document();
             if (String.IsNullOrEmpty(d.Id))
@@ -225,12 +231,15 @@ namespace RedBranch.Hammock
                 docsubclass.Session = d.Session;
                 d = docsubclass;
             }
-    
-            if (_entities.ContainsKey(entity))
+
+            lock (_entities)
             {
-                _entities.Remove(entity);
+                if (_entities.ContainsKey(entity))
+                {
+                    _entities.Remove(entity);
+                }
+                _entities.Add(entity, d);
             }
-            _entities.Add(entity, d);
 
             // fill the document property if the entity implements IHasDocument
             var icanhasdoc = entity as IHasDocument;
@@ -244,16 +253,11 @@ namespace RedBranch.Hammock
         
         public TEntity Load<TEntity>(string id) where TEntity : class
         {
-            foreach (var p in _entities)
+            lock (_entities)
             {
-                if (p.Value.Id == id)
+                foreach (var e in _entities.Where(p => p.Value.Id == id))
                 {
-                    var e = p.Key as TEntity;
-                    if (null == e)
-                    {
-                        throw new InvalidCastException();
-                    }
-                    return e;
+                    return (TEntity)e.Key;
                 }
             }
 
@@ -268,7 +272,10 @@ namespace RedBranch.Hammock
                 var o = JToken.ReadFrom(reader);
 
                 var entity = EntitySerializer.Read<TEntity>(o, ref d);
-                _entities[entity] = d;
+                lock (_entities)
+                {
+                    _entities[entity] = d;
+                }
 
                 // inform observers
                 if (null != _observers)
@@ -283,12 +290,12 @@ namespace RedBranch.Hammock
         public void Delete<TEntity>(TEntity entity) where TEntity : class
         {
             // locate the document
-            if (!_entities.ContainsKey(entity))
+            var d = SafeGetDocument(entity);
+            if (null == d)
             {
                 throw new IndexOutOfRangeException("The entity is not currently enrolled in this session.");
             }
-            var d = _entities[entity];
-
+            
             // allow observers to veto the delete
             if (null != _observers)
             {
@@ -308,7 +315,10 @@ namespace RedBranch.Hammock
                 var response = (__DocumentResponse)serializer.Deserialize(reader, typeof(__DocumentResponse));
                 if (response.ok)
                 {
-                    _entities.Remove(entity);
+                    lock (_entities)
+                    {
+                        _entities.Remove(entity);
+                    }
                 }
                 else
                 {
@@ -330,7 +340,10 @@ namespace RedBranch.Hammock
         /// <returns>True, if an entity with the given id is enrolled, or false if it is not.</returns>
         public bool IsEnrolled(string id)
         {
-            return _entities.Where(x => x.Value.Id == id).Count() == 1;
+            lock (_entities)
+            {
+                return _entities.Where(x => x.Value.Id == id).Count() == 1;
+            }
         }
 
         /// <summary>
@@ -341,7 +354,10 @@ namespace RedBranch.Hammock
         /// <returns>True, if the given entity is enrolled, or false if it is not.</returns>
         public bool IsEnrolled<TEntity>(TEntity entity) where TEntity : class
         {
-            return _entities.ContainsKey(entity);
+            lock (_entities)
+            {
+                return _entities.ContainsKey(entity);
+            }
         }
 
         /// <summary>
@@ -353,11 +369,14 @@ namespace RedBranch.Hammock
         /// <exception cref="System.Exception">Thrown if the any entity is already enrolled using the given document.</exception>
         public void Enroll<TEntity>(Document d, TEntity entity) where TEntity : class
         {
-            if (IsEnrolled(d.Id))
+            lock (_entities)
             {
-                throw new Exception("A entity with this key is already enrolled.");
+                if (IsEnrolled(d.Id))
+                {
+                    throw new Exception("A entity with this key is already enrolled.");
+                }
+                _entities.Add(entity, d);
             }
-            _entities.Add(entity, d);
         }
 
         /// <summary>
@@ -370,7 +389,10 @@ namespace RedBranch.Hammock
         /// </remarks>
         public void Reset()
         {
-            _entities = _entities.Where(x => x.Value.Id.StartsWith("_design/")).ToDictionary(x => x.Key, x => x.Value);
+            lock (_entities)
+            {
+                _entities = _entities.Where(x => x.Value.Id.StartsWith("_design/")).ToDictionary(x => x.Key, x => x.Value);
+            }
         }
 
         /// <summary>
