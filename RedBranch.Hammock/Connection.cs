@@ -142,9 +142,29 @@ namespace RedBranch.Hammock
             if (Environment.OSVersion.Platform == PlatformID.Win32NT ||
                 Environment.OSVersion.Platform == PlatformID.Win32Windows)
             {
+                for (int counter = 0; counter < 3; counter++)
+                {
+                    try
+                    {
+                        _DeleteDatabase(database);
+                        break;
+                    }
+                    catch (CouchException exception)
+                    {
+                        if (exception.Reason != "eacces")
+                            throw;
+                    }
+                }
                 System.Threading.Thread.Sleep(100);
             }
+            else
+            {
+                _DeleteDatabase(database);
+            }
+        }
 
+        private void _DeleteDatabase(string database)
+        {
             var request = (HttpWebRequest)WebRequest.Create(GetDatabaseLocation(database));
             request.Method = "DELETE";
             var response = request.GetCouchResponse();
