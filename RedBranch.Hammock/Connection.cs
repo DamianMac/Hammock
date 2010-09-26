@@ -99,7 +99,14 @@ namespace RedBranch.Hammock
         public string GetDatabaseLocation(string database)
         {
             InvalidDatabaseNameException.Validate(database);
-            var location = new Uri(Location, database.Replace("/", "%2F")).OriginalString;
+            var uri = new Uri(Location, database);
+            var location = uri.OriginalString;
+            if (database.Contains("/") &&
+                location.EndsWith(database))
+            {
+                var escaped = database.Replace("/", "%2F");
+                location = location.Substring(0, location.Length - database.Length) + escaped; 
+            }
             return location.EndsWith("/") ? location : location + "/";
         }
 
