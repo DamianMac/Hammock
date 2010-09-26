@@ -136,7 +136,7 @@ namespace RedBranch.Hammock
         {
             var request = (HttpWebRequest)WebRequest.Create(GetDatabaseLocation(database));
             request.Method = "PUT";
-            var response = request.GetCouchResponse();
+            request.GetCouchResponse().Close();
             _databases = null;
         }
 
@@ -174,7 +174,7 @@ namespace RedBranch.Hammock
         {
             var request = (HttpWebRequest)WebRequest.Create(GetDatabaseLocation(database));
             request.Method = "DELETE";
-            var response = request.GetCouchResponse();
+            request.GetCouchResponse().Close();
             _databases = null;
         }
 
