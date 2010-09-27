@@ -32,6 +32,7 @@ namespace RedBranch.Hammock
 
         public Connection Connection { get; private set; }
         public string Database { get; private set; }
+        public EntitySerializer Serializer { get; private set; }
 
         private int _locks;
         private Dictionary<object, Document> _entities = new Dictionary<object, Document>(100);
@@ -42,6 +43,7 @@ namespace RedBranch.Hammock
             InvalidDatabaseNameException.Validate(database);
             Connection = connection;
             Database = database;
+            Serializer = new EntitySerializer(this);
         }
 
         public ICollection<IObserver> Observers
@@ -196,7 +198,7 @@ namespace RedBranch.Hammock
             // send put            
             var request = (HttpWebRequest) WebRequest.Create(d.Location);
             request.Method = "PUT";
-            var o = EntitySerializer.Write(entity, d);
+            var o = Serializer.Write(entity, d);
             using (var writer = new JsonTextWriter(new StreamWriter(request.GetRequestStream())))
             {
                 o.WriteTo(writer);
@@ -271,7 +273,7 @@ namespace RedBranch.Hammock
             {
                 var o = JToken.ReadFrom(reader);
 
-                var entity = EntitySerializer.Read<TEntity>(o, ref d);
+                var entity = Serializer.Read<TEntity>(o, ref d);
                 lock (_entities)
                 {
                     _entities[entity] = d;

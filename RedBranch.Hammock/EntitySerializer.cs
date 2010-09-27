@@ -1,18 +1,74 @@
 ﻿using System;
+using System.Reflection;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 namespace RedBranch.Hammock
 {
     public class EntitySerializer
     {
-        public static TEntity Read<TEntity>(
+        Session _sx;
+        JsonSerializer _jsonSerializer;
+        
+        public EntitySerializer(Session sx)
+        {
+            _sx = sx;
+            
+            _jsonSerializer = new JsonSerializer();
+            _jsonSerializer.NullValueHandling = NullValueHandling.Ignore;
+            _jsonSerializer.ContractResolver = new _ContractResolver(_sx);
+            _jsonSerializer.Converters.Add(new ReferenceConverter(_sx));
+        }
+      
+        protected JsonSerializer GetJsonSerializer()
+        {
+            return _jsonSerializer;
+        }
+        
+        class _ContractResolver : DefaultContractResolver
+        {
+            ReferenceConverter _referenceConverter;
+            
+            public _ContractResolver(Session sx)
+            {
+                _referenceConverter = new ReferenceConverter(sx);              
+            }
+            
+            protected override JsonConverter ResolveContractConverter(Type objectType)
+            {
+                if (typeof(Reference).IsAssignableFrom(objectType))
+                {
+                    return _referenceConverter;
+                }
+                return base.ResolveContractConverter(objectType);
+            }
+            
+//            protected override JsonProperty CreateProperty(JsonObjectContract contract, MemberInfo member)
+//            {
+//                var prop = base.CreateProperty(contract, member);
+//                var pi = member as PropertyInfo;
+//                if (prop.PropertyName == "Secondary")
+//                {
+//                    prop.
+//                }
+//                if (null != pi &&
+//                    typeof(Reference).IsAssignableFrom(pi.PropertyType))
+//                {
+//                    prop.MemberConverter = _referenceConverter;
+//                }
+//                return prop;
+//            }
+        }
+        
+        public TEntity Read<TEntity>(
             JToken data,
             ref Document d)
         {
             d.Id = (string) data["_id"];
             d.Revision = (string) data["_rev"];
-            var serializer = new JsonSerializer();
+            var serializer = GetJsonSerializer();
             var e = (TEntity)serializer.Deserialize(new JTokenReader(data), typeof(TEntity));
 
             // if the entity subclasses document, use the entity itself
@@ -59,17 +115,16 @@ namespace RedBranch.Hammock
             return e;
         }
 
-        public static JToken WriteFragment(object o)
+        public JToken WriteFragment(object o)
         {
             // serialize the entity
-            var serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Ignore;
+            var serializer = GetJsonSerializer();
             var jwriter = new JTokenWriter();
             serializer.Serialize(jwriter, o);
             return jwriter.Token;
         }
 
-        public static JToken Write<TEntity>(
+        public JToken Write<TEntity>(
             TEntity e,
             Document d)
         {

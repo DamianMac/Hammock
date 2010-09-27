@@ -65,8 +65,7 @@ namespace RedBranch.Hammock
                                 }
                                 else
                                 {
-                                    var serializer = new JsonSerializer();
-                                    _entity = EntitySerializer.Read<TEntity>(_data, ref d);
+                                    _entity = Query.Session.Serializer.Read<TEntity>(_data, ref d);
                                     Query.Session.Enroll(d, _entity);
                                 }
                             }
