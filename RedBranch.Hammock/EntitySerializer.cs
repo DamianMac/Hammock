@@ -19,7 +19,6 @@ namespace RedBranch.Hammock
             _jsonSerializer = new JsonSerializer();
             _jsonSerializer.NullValueHandling = NullValueHandling.Ignore;
             _jsonSerializer.ContractResolver = new _ContractResolver(_sx);
-            _jsonSerializer.Converters.Add(new ReferenceConverter(_sx));
         }
       
         protected JsonSerializer GetJsonSerializer()
@@ -29,37 +28,27 @@ namespace RedBranch.Hammock
         
         class _ContractResolver : DefaultContractResolver
         {
+            Session _sx;
             ReferenceConverter _referenceConverter;
+            ByteArrayConverter _bufferConverter;
             
             public _ContractResolver(Session sx)
             {
-                _referenceConverter = new ReferenceConverter(sx);              
+                _sx = sx;
             }
-            
+
             protected override JsonConverter ResolveContractConverter(Type objectType)
             {
                 if (typeof(Reference).IsAssignableFrom(objectType))
                 {
-                    return _referenceConverter;
+                    return _referenceConverter ?? (_referenceConverter = new ReferenceConverter(_sx));
+                }
+                if (typeof(byte[]) == objectType)
+                {
+                    return _bufferConverter ?? (_bufferConverter = new ByteArrayConverter());
                 }
                 return base.ResolveContractConverter(objectType);
             }
-            
-//            protected override JsonProperty CreateProperty(JsonObjectContract contract, MemberInfo member)
-//            {
-//                var prop = base.CreateProperty(contract, member);
-//                var pi = member as PropertyInfo;
-//                if (prop.PropertyName == "Secondary")
-//                {
-//                    prop.
-//                }
-//                if (null != pi &&
-//                    typeof(Reference).IsAssignableFrom(pi.PropertyType))
-//                {
-//                    prop.MemberConverter = _referenceConverter;
-//                }
-//                return prop;
-//            }
         }
         
         public TEntity Read<TEntity>(
