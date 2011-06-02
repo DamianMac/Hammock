@@ -67,6 +67,14 @@ namespace RedBranch.Hammock
                 _end_key = JToken.FromObject(key);
                 return this;
             }
+            public Spec Exactly(JToken key)
+            {
+                return From(key).To(key);
+            }
+            public Spec Exactly(object key)
+            {
+                return From(key).To(key);
+            }
             public Spec FromDocId(string docid)
             {
                 _cachedResult = null;
