@@ -13,7 +13,7 @@ namespace RedBranch.Hammock
     {
         Attachments Attachments { get; set; }        
     }
-
+    
     public class Attachments : Dictionary<string, Attachment>
     {
     }
