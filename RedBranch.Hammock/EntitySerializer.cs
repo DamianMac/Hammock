@@ -39,7 +39,8 @@ namespace RedBranch.Hammock
 
             protected override JsonConverter ResolveContractConverter(Type objectType)
             {
-                if (typeof(Reference).IsAssignableFrom(objectType))
+                if (typeof(IReference).IsAssignableFrom(objectType) ||
+					(objectType.IsGenericType && typeof(Lazy<>) == objectType.GetGenericTypeDefinition()))
                 {
                     return _referenceConverter ?? (_referenceConverter = new ReferenceConverter(_sx));
                 }

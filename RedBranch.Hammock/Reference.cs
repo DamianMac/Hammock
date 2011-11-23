@@ -7,34 +7,8 @@ namespace RedBranch.Hammock
     /// <summary>
     /// Provides a weak reference to another entity in the datastore.
     /// </summary>
-    public abstract class Reference
+    public static class Reference
     {
-        protected static Document GetDocument(object e)
-        {
-            if (null == e)
-            {
-                throw new ArgumentNullException("Entity is null.");
-            }
-            var doc = e as Document;
-            if (null == doc)
-            {
-                var hasdoc = e as IHasDocument;
-                if (null == hasdoc)
-                {
-                    throw new InvalidOperationException("Entities must either inherit from Document or implement IHasDocument to participate as references.");
-                } else
-                {
-                    doc = hasdoc.Document;
-                }
-            }
-            return doc;
-        }
-
-        public abstract string Id
-        {
-            get;
-        }
-
         public static Reference<TEntity> To<TEntity>(Session sx, string id) where TEntity : class
         {
             return new _LazyReference<TEntity>(sx, id);
@@ -52,13 +26,27 @@ namespace RedBranch.Hammock
 
         public static Reference<TEntity> To<TEntity>(TEntity entity) where TEntity : class
         {
-            return new _StrongReference<TEntity>(entity);
+            return new _StrongReference<TEntity>(null, entity);
         }
+		
+		public static Reference<TEntity> To<TEntity>(TEntity entity, Session sx) where TEntity : class
+		{
+			return new _StrongReference<TEntity>(sx, entity);
+		}
     }
+	
+	public interface IReference
+	{
+		string Id { get; }
+	}
 
-    public abstract class Reference<TEntity> : Reference where TEntity : class
+    public abstract class Reference<TEntity> : Lazy<TEntity>, IReference where TEntity : class
     {
-        public abstract TEntity Value
+		protected Reference(Func<TEntity> factory) : base(factory, System.Threading.LazyThreadSafetyMode.None)
+		{		
+		}
+		
+        public abstract string Id
         {
             get;
         }
@@ -68,9 +56,8 @@ namespace RedBranch.Hammock
     {
         Session _sx;
         string _id;
-        TEntity _entity;
 
-        public _LazyReference(Session sx, string id)
+        public _LazyReference(Session sx, string id) : base(() => _sx.Load<TEntity>(_id))
         {
             _sx = sx;
             _id = id;
@@ -80,25 +67,13 @@ namespace RedBranch.Hammock
         {
             get { return _id; }
         }
-
-        public override TEntity Value
-        {
-            get
-            {
-                if (null == _entity)
-                {
-                    _entity = _sx.Load<TEntity>(_id);
-                }
-                return _entity;
-            }
-        }
     }
 
     class _WeakReference<TEntity> : Reference<TEntity> where TEntity : class
     {
         string _id;
 
-        public _WeakReference(string id)
+        public _WeakReference(string id) : base(() => { throw new InvalidOperationException(); })
         {
             _id = id;
         }
@@ -107,41 +82,43 @@ namespace RedBranch.Hammock
         {
             get { return _id; }
         }
-
-        public override TEntity Value
-        {
-            get
-            {
-                throw new InvalidOperationException();
-            }
-        }
     }
 
     class _StrongReference<TEntity> : Reference<TEntity> where TEntity : class
     {
-        TEntity _entity;
+		Session _sx;
+		TEntity _entity;
 
-        public _StrongReference(TEntity entity)
+        public _StrongReference(Session sx, TEntity entity) : base(() => _entity)
         {
-            _entity = entity;
+			_entity = entity;
+			
+			_sx = sx;
+			if (null == sx &&
+				null != _entity &&
+				null == (_entity as Document) &&
+				null == (_entity as IHasDocument))
+			{
+				throw new ArgumentNullException("sx",
+					"You must supply a Session instance when creating a strong reference if the entity does not subclass Document or implement IHasDocument.");
+			}
         }
 
         public override string Id
         {
             get
             {
-                if (null == _entity)
-                    return null;
-                var doc = GetDocument(_entity);
-                if (null == doc)
-                    return null;
-                return doc.Id;
+				// prefer to inspect the entity for a document
+				var doc = _entity as Document;
+				if (null != doc) return doc.Id;
+				var hasdoc = _entity as IHasDocument;
+				if (null != hasdoc && null != hasdoc.Document) return hasdoc.Document.Id;
+				
+				// poco, so ask the session
+				doc = _sx.GetDocument(_entity);
+                if (null != doc) return doc.Id;
+				return null;
             }
-        }
-
-        public override TEntity Value
-        {
-            get { return _entity; }
         }
     }
 
@@ -156,9 +133,7 @@ namespace RedBranch.Hammock
 
         public override bool CanConvert(Type objectType)
         {
-            return !objectType.IsAbstract && 
-                   objectType.IsGenericType &&
-                   typeof(Reference).IsAssignableFrom(objectType);
+			return true;
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
@@ -166,16 +141,54 @@ namespace RedBranch.Hammock
             if (null == value)
             {
                 writer.WriteNull();
-            } else
+				return;
+            }
+			
+			var t = value.GetType();
+			if (typeof(_StrongReference<>).IsAssignableFrom(t))
+			{
+				// strong references to poco objects are more difficult to resolve	
+				
+			}
+			if (typeof(IReference).IsAssignableFrom(t))
             {
-                var reference = (Reference)value;
+                var reference = (IReference)value;
                 var id = reference.Id;
                 if (String.IsNullOrEmpty(id))
                 {
-                    throw new InvalidOperationException("Referenced entities must be saved before the entity that references them.");
+                    throw new InvalidOperationException(
+						"Referenced entities must be saved before the entity that references them.");
                 }
                 writer.WriteValue((string)id);
             }
+			else if (typeof(Document).IsAssignableFrom(t))
+			{
+				var doc = (Document)value;
+				writer.WriteValue(doc.Id);
+			}
+			else if (typeof(IHasDocument).IsAssignableFrom(t))
+			{
+				var entity = (IHasDocument)value;
+				this.WriteJson(writer, entity.Document, serializer);
+			}
+			else if (t.IsGenericType && typeof(Lazy<>) == t.GetGenericTypeDefinition())
+			{
+				var entity = t.GetProperty("Value").GetValue(value, null);
+				this.WriteJson(writer, entity, serializer);
+			}
+			else
+			{
+				var doc = _sx.GetDocument(value);
+                if (null != doc)
+				{
+					this.WriteJson(writer, doc, serializer);
+				}
+				else
+				{
+					throw new InvalidOperationException(
+						"Entities must either subclass Document, implement IHasDocument, or be enrolled in the Session to participate as references.");
+				}
+			}
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)

@@ -37,8 +37,14 @@ namespace RedBranch.Hammock.Test
             public string Name { get; set; }
             public Reference<Cyclocycle> Whoah { get; set; }
         }
+		
+		public class Lazypoco
+		{
+			public string Name { get; set; }
+			public Lazy<Lazypoco> Parent { get; set; }
+			public IList<Lazy<Lazypoco>> Children { get; set; }
+		}
 
-        
         [TestFixtureSetUp]
         public void FixtureSetup()
         {
@@ -181,6 +187,19 @@ namespace RedBranch.Hammock.Test
                 Assert.That(c2a, Is.SameAs(c2));
             }
         }
+		
+		[Test]
+		public void Poco_with_lazy1_can_be_written()
+		{
+			var a = new Lazypoco { Name = "foo" }; 
+			var Da = _sx.Save(a);
+			
+			var b = new Lazypoco { Name = "bar", Parent = new Lazy<Lazypoco>(() => a) };
+			var Db = _sx.Save(b);
+			
+			var c = _sx2.Load<Lazypoco>(Db.Id);
+			Assert.That(a.Name, Is.EqualTo(c.Parent.Value.Name));
+		}
     }
 }
 

@@ -143,7 +143,7 @@ namespace RedBranch.Hammock
             return d;
         }
 
-        private Document SafeGetDocument(object entity)
+        public Document GetDocument(object entity)
         {
             lock (_entities)
             {
@@ -153,7 +153,7 @@ namespace RedBranch.Hammock
 
         public Document Save<TEntity>(TEntity entity, string id) where TEntity : class
         {
-            var d = SafeGetDocument(entity);
+            var d = GetDocument(entity);
             if (null != d)
             {
                 if (d.Id != id)
@@ -167,12 +167,12 @@ namespace RedBranch.Hammock
             
         public Document Save<TEntity>(TEntity entity) where TEntity : class
         {
-            var d = SafeGetDocument(entity) ??
+            var d = GetDocument(entity) ??
                       (entity as Document) ?? 
                       (entity is IHasDocument ? ((IHasDocument)entity).Document : null) ??
                       new Document();
             if (String.IsNullOrEmpty(d.Id))
-            {
+			{
                 d.Id = Document.For<TEntity>(Guid.NewGuid().ToString());
                 d.Revision = null;
             }
@@ -292,7 +292,7 @@ namespace RedBranch.Hammock
         public void Delete<TEntity>(TEntity entity) where TEntity : class
         {
             // locate the document
-            var d = SafeGetDocument(entity);
+            var d = GetDocument(entity);
             if (null == d)
             {
                 throw new IndexOutOfRangeException("The entity is not currently enrolled in this session.");
