@@ -53,7 +53,6 @@
     <Compile Include="Connection.cs" />
     <Compile Include="Query.Result.cs" />
     <Compile Include="Query.Spec.cs" />
-    <Compile Include="CouchProcess.cs" />
     <Compile Include="Design\DesignDocument.cs" />
     <Compile Include="Design\View.cs" />
     <Compile Include="Document.cs" />
