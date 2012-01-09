@@ -66,6 +66,9 @@
     <Compile Include="Session.cs" />
     <Compile Include="StringExtensions.cs" />
     <Compile Include="Reference.cs" />
+    <Compile Include="Design\Filter.cs" />
+    <Compile Include="Design\FilterDocument.cs" />
+    <Compile Include="Design\ReplicationDocument.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

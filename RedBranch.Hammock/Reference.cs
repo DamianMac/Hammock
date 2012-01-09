@@ -75,12 +75,11 @@ namespace RedBranch.Hammock
 
     class _LazyReference<TEntity> : Reference<TEntity> where TEntity : class
     {
-        Session _sx;
         string _id;
 
-        public _LazyReference(Session sx, string id) : base(() => _sx.Load<TEntity>(_id))
+        public _LazyReference(Session sx, string id)
+            : base(() => sx.Load<TEntity>(id))
         {
-            _sx = sx;
             _id = id;
         }
 
@@ -110,7 +109,7 @@ namespace RedBranch.Hammock
 		Session _sx;
 		TEntity _entity;
 
-        public _StrongReference(Session sx, TEntity entity) : base(() => _entity)
+        public _StrongReference(Session sx, TEntity entity) : base(() => entity)
         {
 			_entity = entity;
 			

@@ -3,6 +3,7 @@
 //  
 //  Author:
 //       Nick Nystrom <nnystrom@gmail.com>
+//       Eddie Dillon <eddie.d.2000@gmail.com>
 //  
 //  Copyright (c) 2009-2011 Nicholas J. Nystrom
 // 
@@ -40,6 +41,9 @@ namespace RedBranch.Hammock
 
         public static void Validate(string database)
         {
+            if ("_replicator" == database)
+                return;
+
             if (null == database)
             {
                 throw new ArgumentNullException("database", "Database name argument must not be null.");
