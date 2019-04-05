@@ -92,7 +92,7 @@ namespace Hammock.Tests
         public void Session_invokes_observer_before_save()
         {
             var o = new MockObserver();
-            var sx = _cx.CreateSession("relax-observer-tests");
+            var sx = _cx.CreateSession(_sx.Database);
             sx.Observers.Add(o);
             var w = new Widget();
             sx.Save(w);
@@ -104,7 +104,7 @@ namespace Hammock.Tests
         public void Session_invokes_observer_after_save()
         {
             var o = new MockObserver();
-            var sx = _cx.CreateSession("relax-observer-tests");
+            var sx = _cx.CreateSession(_sx.Database);
             sx.Observers.Add(o);
             var w = new Widget();
             sx.Save(w);
@@ -115,7 +115,7 @@ namespace Hammock.Tests
         public void Session_invokes_observer_before_delete()
         {
             var o = new MockObserver();
-            var sx = _cx.CreateSession("relax-observer-tests");
+            var sx = _cx.CreateSession(_sx.Database);
             sx.Observers.Add(o);
             var w = new Widget();
             sx.Save(w);
@@ -127,7 +127,7 @@ namespace Hammock.Tests
         public void Session_invokes_observer_after_delete()
         {
             var o = new MockObserver();
-            var sx = _cx.CreateSession("relax-observer-tests");
+            var sx = _cx.CreateSession(_sx.Database);
             sx.Observers.Add(o);
             var w = new Widget();
             sx.Save(w);
@@ -139,8 +139,8 @@ namespace Hammock.Tests
         public void Session_invokes_observer_after_load()
         {
             var o = new MockObserver();
-            var sx1 = _cx.CreateSession("relax-observer-tests");
-            var sx2 = _cx.CreateSession("relax-observer-tests");
+            var sx1 = _cx.CreateSession(_sx.Database);
+            var sx2 = _cx.CreateSession(_sx.Database);
             sx2.Observers.Add(o);
             var w = new Widget();
             var d = sx1.Save(w);
@@ -153,7 +153,7 @@ namespace Hammock.Tests
         {
             var o = new MockObserver();
             o.BeforeSaveDisposition = Disposition.Decline;
-            var sx = _cx.CreateSession("relax-observer-tests");
+            var sx = _cx.CreateSession(_sx.Database);
             sx.Observers.Add(o);
             var w = new Widget();
             Assert.Throws<Exception>(() => sx.Save(w));
@@ -165,7 +165,7 @@ namespace Hammock.Tests
         {
             var o = new MockObserver();
             o.BeforeDeleteDisposition = Disposition.Decline;
-            var sx = _cx.CreateSession("relax-observer-tests");
+            var sx = _cx.CreateSession(_sx.Database);
             sx.Observers.Add(o);
             var w = new Widget();
             var d = sx.Save(w);
