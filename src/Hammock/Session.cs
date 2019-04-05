@@ -28,9 +28,9 @@ using System.Text;
 using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RedBranch.Hammock.Design;
+using Hammock.Design;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     public partial class Session : IDisposable
     {

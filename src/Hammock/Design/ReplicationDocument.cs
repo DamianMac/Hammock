@@ -26,7 +26,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace RedBranch.Hammock.Design
+namespace Hammock.Design
 {
     public class ReplicationDocument
     {

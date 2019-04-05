@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace RedBranch.Hammock.Design
+namespace Hammock.Design
 {
     public class DesignDocument
     {

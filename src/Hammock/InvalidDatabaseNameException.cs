@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     public class InvalidDatabaseNameException : Exception
     {

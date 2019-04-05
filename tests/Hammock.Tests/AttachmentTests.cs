@@ -27,7 +27,7 @@ using System.Text;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace RedBranch.Hammock.Test
+namespace Hammock.Test
 {
     [TestFixture]
     public class AttachmentTests

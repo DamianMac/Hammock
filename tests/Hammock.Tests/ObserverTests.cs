@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 
-namespace RedBranch.Hammock.Test
+namespace Hammock.Test
 {
     [TestFixture]
     public class ObserverTests

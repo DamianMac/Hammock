@@ -21,7 +21,7 @@
 
 using Newtonsoft.Json;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     public class Document
     {

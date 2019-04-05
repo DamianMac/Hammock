@@ -28,7 +28,7 @@ using System.Text;
 
 using Newtonsoft.Json;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     public static class __EnumerableExtensions
     {

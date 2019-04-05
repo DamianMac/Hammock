@@ -25,9 +25,9 @@ using System.Linq;
 using System.Text;
 
 using NUnit.Framework;
-using RedBranch.Hammock.Design;
+using Hammock.Design;
 
-namespace RedBranch.Hammock.Test
+namespace Hammock.Test
 {
     [TestFixture]
     public class SessionTests

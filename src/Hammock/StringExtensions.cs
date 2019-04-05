@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     public static class StringExtensions
     {

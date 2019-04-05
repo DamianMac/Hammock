@@ -29,7 +29,7 @@ using System.Web;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     public partial class Query<TEntity> where TEntity : class
     {

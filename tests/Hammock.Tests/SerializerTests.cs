@@ -26,7 +26,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
-namespace RedBranch.Hammock.Test
+namespace Hammock.Test
 {
     [TestFixture]
     public class SerializerTests

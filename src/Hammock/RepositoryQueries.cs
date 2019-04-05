@@ -26,9 +26,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using RedBranch.Hammock.Design;
+using Hammock.Design;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     #region Adhoc Query Interfaces
 

@@ -27,9 +27,9 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Text;
 using System.Web;
-using RedBranch.Hammock.Design;
+using Hammock.Design;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     public interface IRepository<TEntity> where TEntity : class
     {

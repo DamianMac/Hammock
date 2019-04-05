@@ -23,7 +23,7 @@ using System;
 
 using Newtonsoft.Json;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     /// <summary>
     /// Provides a weak reference to another entity in the datastore.

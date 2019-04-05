@@ -29,9 +29,9 @@ using Newtonsoft.Json.Linq;
 
 using NUnit.Framework;
 
-using RedBranch.Hammock.Design;
+using Hammock.Design;
 
-namespace RedBranch.Hammock.Test
+namespace Hammock.Test
 {
     [TestFixture]
     public class ReferenceTests

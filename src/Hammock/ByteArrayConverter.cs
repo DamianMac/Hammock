@@ -23,7 +23,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace RedBranch.Hammock
+namespace Hammock
 {
     class ByteArrayConverter : JsonConverter
     {
