@@ -23,21 +23,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
-using NUnit.Framework;
+using Xunit;
 
 namespace Hammock.Test
 {
-    [TestFixture]
-    public class ConnectionTests
+    
+    public class ConnectionTests : IDisposable
     {
         public static Connection CreateConnection()
         {
             return new Connection(new Uri("http://localhost:5984"));
         }
 
-        [TestFixtureSetUp]
-        public void FixtureSetup()
+        
+        public ConnectionTests()
         {
             var c = CreateConnection();
             c.ListDatabases().Where(x => x.StartsWith("relax-can-"))
@@ -45,56 +44,55 @@ namespace Hammock.Test
             c.CreateDatabase("relax-can-delete-database");
         }
 
-        [TestFixtureTearDown]
-        public void FixtureTeardown()
+        public void Dispose()
         {
             var c = CreateConnection();
             c.ListDatabases().Where(x => x.StartsWith("relax-can-"))
                              .Each(x => c.DeleteDatabase(x));
         }
 
-        [Test]
+        [Fact]
         public void Slashes_in_database_names_must_be_escaped()
         {
-            Assert.AreEqual(
+            Assert.Equal(
                 "http://localhost:5984/forward%2Fslash/",
                 CreateConnection().GetDatabaseLocation("forward/slash")
             );
         }
 
-        [Test]
+        [Fact]
         public void Connection_can_list_databases()
         {
-            Assert.IsNotEmpty(CreateConnection().ListDatabases());
+            Assert.NotEmpty(CreateConnection().ListDatabases());
         }
 
-        [Test]
+        [Fact]
         public void Connection_can_create_database()
         {
             var c = CreateConnection();
             c.CreateDatabase("relax-can-create-database");
-            Assert.IsTrue(c.ListDatabases().Contains("relax-can-create-database"));
+            Assert.True(c.ListDatabases().Contains("relax-can-create-database"));
         }
 
-        [Test]
+        [Fact]
         public void Connection_can_delete_database()
         {
             var c = CreateConnection();
             c.DeleteDatabase("relax-can-delete-database");
-            Assert.IsFalse(c.ListDatabases().Contains("relax-can-delete-database"));
+            Assert.False(c.ListDatabases().Contains("relax-can-delete-database"));
         }
 
-        [Test]
+        [Fact]
         public void Connection_can_create_Session()
         {
             var c = CreateConnection();
             var s = c.CreateSession("relax-can-create-session");
-            Assert.IsNotNull(s);
-            Assert.AreSame(c, s.Connection);
-            Assert.AreEqual("relax-can-create-session", s.Database);
+            Assert.NotNull(s);
+            Assert.Same(c, s.Connection);
+            Assert.Equal("relax-can-create-session", s.Database);
         }
 
-        [Test]
+        [Fact]
         public void Conection_can_reuse_session()
         {
             var c = CreateConnection();
@@ -102,7 +100,7 @@ namespace Hammock.Test
             c.ReturnSession(s);
             var s2 = c.CreateSession("relax-can-create-session");
             
-            Assert.That(s2, Is.SameAs(s));
+            Assert.Same(s2, s);
         }
     }
 }

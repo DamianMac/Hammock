@@ -27,13 +27,13 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-using NUnit.Framework;
+using Xunit;
 
 using Hammock.Design;
 
 namespace Hammock.Test
 {
-    [TestFixture]
+    
     public class ReferenceTests
     {
         private Connection _cx;
@@ -66,8 +66,7 @@ namespace Hammock.Test
 			public IList<Lazy<Lazypoco>> Children { get; set; }
 		}
 
-        [TestFixtureSetUp]
-        public void FixtureSetup()
+        public ReferenceTests()
         {
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-reference-tests"))
@@ -101,25 +100,25 @@ namespace Hammock.Test
 
         }
 
-        [Test]
+        [Fact]
         public void Lazy_reference_can_be_resolved()
         {
             var r = new Repository<Gizmo>(_sx);
             var g1 = r.Get("g1");
-            Assert.That(g1.Primary.Id, Is.EqualTo("w1"));
-            Assert.That(g1.Primary.Value.Id, Is.EqualTo(g1.Primary.Id));
+            Assert.Equal("w1", g1.Primary.Id);
+            Assert.Equal(g1.Primary.Id, g1.Primary.Value.Id);
         }
         
-        [Test]
+        [Fact]
         public void Lazy_reference_array_can_be_resolved()
         {
             var r = new Repository<Gizmo>(_sx);
             var g2 = r.Get("g2");
             
-            Assert.That(g2.Secondary.Sum(x => x.Value.Cost), Is.EqualTo(95));
+            Assert.Equal(95, g2.Secondary.Sum(x => x.Value.Cost));
         }
         
-        [Test]
+        [Fact]
         public void Weak_reference_can_be_written()
         {
             {
@@ -130,16 +129,17 @@ namespace Hammock.Test
                     Name = "weeeeaaaak",
                     Primary = Reference.To<Widget>("w6"),
                 };
-                Assert.DoesNotThrow(() => r.Save(g3));
+                r.Save(g3);
+                
             }
             {
                 var r = new Repository<Gizmo>(_sx2);
                 var g3 = r.Get("g3");
-                Assert.That(g3.Primary.Value.Cost, Is.EqualTo(55));
+                Assert.Equal(55, g3.Primary.Value.Cost);
             }
         }
         
-        [Test]
+        [Fact]
         public void Weak_reference_cannot_be_resolved()
         {
             var g = new Gizmo
@@ -151,7 +151,7 @@ namespace Hammock.Test
             Assert.Throws<InvalidOperationException>(() => { var x = g.Primary.Value; });
         }
         
-        [Test]
+        [Fact]
         public void Strong_reference_can_be_written()
         {
             {
@@ -164,16 +164,16 @@ namespace Hammock.Test
                     Name = "stronglikeukraine",
                     Primary = Reference.To(w5),
                 };
-                Assert.DoesNotThrow(() => r.Save(g4));
+                r.Save(g4);
             }
             {
                 var r = new Repository<Gizmo>(_sx2);
                 var g4 = r.Get("g4");
-                Assert.That(g4.Primary.Value.Cost, Is.EqualTo(45));
+                Assert.Equal(45, g4.Primary.Value.Cost);
             }
         }
         
-        [Test]
+        [Fact]
         public void Strong_reference_value_must_have_id_before_save()
         {
             var r = new Repository<Gizmo>(_sx);
@@ -186,7 +186,7 @@ namespace Hammock.Test
             Assert.Throws<InvalidOperationException>(() => r.Save(g5));
         }
         
-        [Test]
+        [Fact]
         public void Cyclical_references_are_supported()
         {
             {
@@ -204,12 +204,12 @@ namespace Hammock.Test
                 var c2 = c1.Whoah.Value;
                 var c1a = c2.Whoah.Value;   
                 var c2a = c1a.Whoah.Value;
-                Assert.That(c1a, Is.SameAs(c1));
-                Assert.That(c2a, Is.SameAs(c2));
+                Assert.Same(c1, c1a);
+                Assert.Same(c2, c2a);
             }
         }
 		
-		[Test]
+		[Fact]
 		public void Poco_with_lazy1_can_be_written()
 		{
 			var a = new Lazypoco { Name = "foo" }; 
@@ -219,7 +219,7 @@ namespace Hammock.Test
 			var Db = _sx.Save(b);
 			
 			var c = _sx2.Load<Lazypoco>(Db.Id);
-			Assert.That(a.Name, Is.EqualTo(c.Parent.Value.Name));
+			Assert.Equal(c.Parent.Value.Name, a.Name);
 		}
     }
 }

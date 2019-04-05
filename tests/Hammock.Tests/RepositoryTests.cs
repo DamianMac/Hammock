@@ -23,17 +23,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
-using NUnit.Framework;
-
+using Xunit;
 using Hammock.Design;
 
 namespace Hammock.Test
 {
-    [TestFixture]
     public class RepositoryTests
     {
         public class Widget
@@ -59,8 +55,7 @@ namespace Hammock.Test
         private Session _sx;
         private Session _sx2;
 
-        [TestFixtureSetUp]
-        public void FixtureSetup()
+        public RepositoryTests()
         {
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-repository-tests"))
@@ -80,14 +75,14 @@ namespace Hammock.Test
 
         }
 
-        [Test]
+        [Fact]
         public void Can_create_repository()
         {
             var r = new Repository<Widget>(_sx);
-            Assert.AreSame(_sx, r.Session);
+            Assert.Same(_sx, r.Session);
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_get_entity()
         {
             var w = new Widget {Name = "gear"};
@@ -95,10 +90,10 @@ namespace Hammock.Test
             var r = new Repository<Widget>(_sx2);
             var w2 = r.Get(doc.Id);
 
-            Assert.AreEqual(w.Name, w2.Name);
+            Assert.Equal(w.Name, w2.Name);
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_delete_entity()
         {
             var w = new Widget { Name = "sprocket" };
@@ -106,20 +101,20 @@ namespace Hammock.Test
             var r = new Repository<Widget>(_sx);
             r.Delete(w);
 
-            Assert.IsFalse(_sx.ListDocuments().Any(x => x.Id == doc.Id));
+            Assert.False(_sx.ListDocuments().Any(x => x.Id == doc.Id));
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_save_entity()
         {
             var w = new Widget { Name = "doodad" };
             var r = new Repository<Widget>(_sx);
             var doc = r.Save(w);
 
-            Assert.IsTrue(_sx.ListDocuments().Any(x => x.Id == doc.Id));
+            Assert.True(_sx.ListDocuments().Any(x => x.Id == doc.Id));
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_create_queries_from_design()
         {
             var design = new DesignDocument
@@ -138,13 +133,13 @@ namespace Hammock.Test
             };
             var r = new Repository<Widget>(_sx, design);
 
-            Assert.IsNotNull(r.Queries["all-widgets"]);
-            Assert.IsNotNull(r.Queries["all-manufacturers"]);
-            Assert.AreEqual("widget", r.Queries["all-manufacturers"].Design);
-            Assert.IsTrue(r.Queries["all-manufacturers"].Group);
+            Assert.NotNull(r.Queries["all-widgets"]);
+            Assert.NotNull(r.Queries["all-manufacturers"]);
+            Assert.Equal("widget", r.Queries["all-manufacturers"].Design);
+            Assert.True(r.Queries["all-manufacturers"].Group);
         }
 
-        [Test]
+        [Fact]
         public void Repository_loads_design_document_from_session()
         {
             DesignDocument design = null;
@@ -172,30 +167,30 @@ namespace Hammock.Test
             _sx.Save(design, "_design/widget");
 
             var r = new Repository<Widget>(_sx);
-            Assert.AreEqual(2, r.Queries.Count);
+            Assert.Equal(2, r.Queries.Count);
         }
 
-        [Test]
+        [Fact]
         public void Repository_creates_design_document_if_not_found()
         {
             new Repository<Wingding>(_sx);
-            Assert.That(_sx.IsEnrolled("_design/wingding"));
+            Assert.True(_sx.IsEnrolled("_design/wingding"));
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_generate_views()
         {
             var r = new Repository<Widget>(_sx);
             r.Where(x => x.Name).Eq("gadget")
                .And(x => x.Cost).Bw(10,20)
                .List();
-            Assert.That(
+            Assert.True(
                 _sx.Load<DesignDocument>("_design/widget").Views.ContainsKey(
                 "by-name-cost"
             ));
         }
 
-        [Test]
+        [Fact]
         public void Fields_must_appear_only_once_in_a_generated_view()
         {
             var r = new Repository<Widget>(_sx);
@@ -205,65 +200,65 @@ namespace Hammock.Test
                    .And(x => x.Cost).Le(20));
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_query_by_equality()
         {
             var r = new Repository<Gizmo>(_sx);
             var z = r.Where(x => x.Manufacturer).Eq("Widgetco").List();
-            Assert.That(z.Rows.Length, Is.EqualTo(3));
+            Assert.Equal(3, z.Rows.Length);
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_query_by_greater_than_or_equal_to()
         {
             var r = new Repository<Gizmo>(_sx);
             var z = r.Where(x => x.Cost).Ge(35).List();
-            Assert.That(z.Rows.Length, Is.EqualTo(4));
+            Assert.Equal(4, z.Rows.Length);
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_query_by_less_than_or_equal_to()
         {
             var r = new Repository<Gizmo>(_sx);
             var z = r.Where(x => x.Cost).Le(35).List();
-            Assert.That(z.Rows.Length, Is.EqualTo(4));
+            Assert.Equal(4, z.Rows.Length);
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_query_by_between()
         {
             var r = new Repository<Gizmo>(_sx);
             var z = r.Where(x => x.Cost).Bw(35, 45).List();
-            Assert.That(z.Rows.Length, Is.EqualTo(3));
+            Assert.Equal(3, z.Rows.Length);
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_with_and()
         {
             var r = new Repository<Gizmo>(_sx);
             var z = r.Where(x => x.Manufacturer).Eq("ACME")
                      .And(x => x.Cost).Bw(35, 45)
                      .List();
-            Assert.That(z.Rows.Length, Is.EqualTo(1));
+            Assert.Equal(1, z.Rows.Length);
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_list_all_entities()
         {
             var r = new Repository<Gizmo>(_sx);
             var all = r.All();
-            Assert.That(all.Count(), Is.EqualTo(6));
+            Assert.Equal(6, all.Count());
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_query_by_like()
         {
             var r = new Repository<Gizmo>(_sx);
             var z = r.Where(x => x.Name).Like("dget").List();
-            Assert.That(z.Rows.Length, Is.EqualTo(2));
+            Assert.Equal(2, z.Rows.Length);
         }
 
-        [Test]
+        [Fact]
         public void Repository_query_like_must_appear_only_once()
         {
             var r = new Repository<Gizmo>(_sx);
@@ -272,15 +267,15 @@ namespace Hammock.Test
             });
         }
 
-        [Test]
+        [Fact]
         public void Repository_query_can_return_values()
         {
             var r = new Repository<Gizmo>(_sx);
             var z = r.Where(x => x.Cost).Le(35).Returns(x => x.Name).List();
-            Assert.That(z.Rows.All(x => x.Value != null), Is.True);
+            Assert.True(z.Rows.All(x => x.Value != null));
         }
 
-        [Test]
+        [Fact]
         public void Repository_query_can_return_multiple_values()
         {
             var r = new Repository<Gizmo>(_sx);
@@ -289,7 +284,7 @@ namespace Hammock.Test
                 .Returns(x => x.Name)
                 .Returns(x => x.Cost)
                 .List();
-            Assert.That(z.Rows.All(x => (x.Value as JArray) != null), Is.True);
+            Assert.True(z.Rows.All(x => (x.Value as JArray) != null));
         }
 
         public class GizmoRepository : Repository<Gizmo>
@@ -313,23 +308,23 @@ namespace Hammock.Test
             }
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_create_custom_view()
         {
             var r = new GizmoRepository(_sx);
             r.CustomView("CustomView0");
 
-            Assert.That(r.Design.Views.ContainsKey("CustomView0"));
+            Assert.True(r.Design.Views.ContainsKey("CustomView0"));
         }
 
-        [Test]
+        [Fact]
         public void Repository_can_update_existing_custom_view()
         {
             var r = new GizmoRepository(_sx);
             r.CustomView("CustomView0");
             r.CustomView2("CustomView0");
 
-            Assert.That(r.Design.Views["CustomView0"].Map.Contains("emit(doc._id, doc._id);"));
+            Assert.True(r.Design.Views["CustomView0"].Map.Contains("emit(doc._id, doc._id);"));
         }
     }
 }

@@ -23,12 +23,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Hammock.Design;
-
 namespace Hammock.Test
 {
-    [TestFixture]
+    
     public class QueryTests
     {
         public class Widget
@@ -46,8 +45,7 @@ namespace Hammock.Test
         private Connection _cx;
         private Session _sx;
 
-        [TestFixtureSetUp]
-        public void FixtureSetup()
+        public QueryTests()
         {
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-query-tests"))
@@ -80,64 +78,64 @@ namespace Hammock.Test
             );      
         }
 
-        [Test]
+        [Fact]
         public void Can_execute_query()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
             var r = q.All().Execute();
 
-            Assert.AreEqual(r.Total, 3);
+            Assert.Equal(r.Total, 3);
         }
 
-        [Test]
+        [Fact]
         public void Can_execute_query_with_keys_and_values()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-manufacturers", true);
             var r = q.All().Execute();
 
-            Assert.AreEqual(2, r.Total);
-            Assert.IsNotNull(r.Rows[0].Key);
-            Assert.IsNotNull(r.Rows[1].Value);
+            Assert.Equal(2, r.Total);
+            Assert.NotNull(r.Rows[0].Key);
+            Assert.NotNull(r.Rows[1].Value);
         }
 
-        [Test]
+        [Fact]
         public void Can_execute_query_with_result_limit()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
             var r = q.Limit(2).Execute();
 
-            Assert.AreEqual(r.Total, 3);
-            Assert.AreEqual(r.Rows.Length, 2);
+            Assert.Equal(r.Total, 3);
+            Assert.Equal(r.Rows.Length, 2);
         } 
 
-        [Test]
+        [Fact]
         public void Can_page_through_results()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
             
             var r = q.Limit(2).Execute();
-            Assert.AreEqual(3, r.Total);
-            Assert.AreEqual(2, r.Rows.Length);
+            Assert.Equal(3, r.Total);
+            Assert.Equal(2, r.Rows.Length);
 
             r = r.Next();
-            Assert.AreEqual(3, r.Total);
-            Assert.AreEqual(1, r.Rows.Length);
+            Assert.Equal(3, r.Total);
+            Assert.Equal(1, r.Rows.Length);
 
             r = r.Next();
-            Assert.IsNull(r);
+            Assert.Null(r);
         }
 
-        [Test]
+        [Fact]
         public void Can_load_through_id()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
             var r = q.Limit(1).Execute();
             var o = r.Rows.First().Entity;
 
-            Assert.IsNotNull(o);
+            Assert.NotNull(o);
         }
 
-        [Test]
+        [Fact]
         public void Can_prefetch_documents_and_enroll_doc()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
@@ -147,11 +145,11 @@ namespace Hammock.Test
 
             var e1 = _sx.Load<Widget>(r0.Rows.First().Id);
 
-            Assert.IsNotNull(e0);
-            Assert.AreSame(e0, e1);
+            Assert.NotNull(e0);
+            Assert.Same(e0, e1);
         }
 
-        [Test]
+        [Fact]
         public void Can_prefetch_documents_where_doc_is_already_enrolled()
         {
             var q = new Query<Widget>(_sx, "widgets", "all-widgets");
@@ -162,11 +160,11 @@ namespace Hammock.Test
             var r1 = q.Limit(1).WithDocuments().Execute();
             var e1 = r1.Rows.First().Entity;
 
-            Assert.IsNotNull(e1);
-            Assert.AreSame(e0, e1);
+            Assert.NotNull(e1);
+            Assert.Same(e0, e1);
         }
 
-        [Test]
+        [Fact]
         public void Can_prefetch_document_and_fill_ihasdocument()
         {
             var s2 = _cx.CreateSession("relax-query-tests");
@@ -175,7 +173,7 @@ namespace Hammock.Test
             var r0 = q.Limit(1).WithDocuments().Execute();
             var e0 = r0.Rows.First().Entity;
 
-            Assert.That(e0.Document, Is.Not.Null);
+            Assert.NotNull(e0.Document);
         }
 
     }

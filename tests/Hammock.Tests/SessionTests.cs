@@ -23,13 +23,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
-using NUnit.Framework;
+using Xunit;
 using Hammock.Design;
 
 namespace Hammock.Test
 {
-    [TestFixture]
+    
     public class SessionTests
     {
         private Connection _cx;
@@ -47,8 +46,8 @@ namespace Hammock.Test
             public string Name { get; set; }
         }
 
-        [TestFixtureSetUp]
-        public void FixtureSetup()
+        
+        public SessionTests()
         {
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-session-tests"))
@@ -64,48 +63,48 @@ namespace Hammock.Test
             _doc = x.Save(w);
         }
 
-        [Test]
+        [Fact]
         public void Can_list_documents()
         {
             var ids = _sx.ListDocuments();
-            Assert.IsNotNull(ids);
+            Assert.NotNull(ids);
         }
 
-        [Test]
+        [Fact]
         public void Can_create_entity()
         {
             var w = new Widget {Name = "sproket", Tags = new[] {"big", "small"}};
             var doc = _sx.Save(w);
-            Assert.IsTrue(_sx.ListDocuments().Any(x => x.Id == doc.Id && x.Revision == doc.Revision));
+            Assert.True(_sx.ListDocuments().Any(x => x.Id == doc.Id && x.Revision == doc.Revision));
         }
 
-        [Test]
+        [Fact]
         public void Can_delete_entity()
         {
             var w = new Widget { Name = "sproket", Tags = new[] { "big", "small" } };
             var doc = _sx.Save(w);
             _sx.Delete(w);
-            Assert.IsFalse(_sx.ListDocuments().Any(x => x.Id == doc.Id && x.Revision == doc.Revision));
+            Assert.False(_sx.ListDocuments().Any(x => x.Id == doc.Id && x.Revision == doc.Revision));
         }
 
-        [Test]
+        [Fact]
         public void Can_update_entity_after_creating_it()
         {
             var w = new Widget { Name = "sproket", Tags = new[] { "big", "small" } };
             var doc = _sx.Save(w);
             var doc2 = _sx.Save(w);
-            Assert.AreEqual(doc.Id, doc2.Id);
-            Assert.AreNotEqual(doc.Revision, doc2.Revision);
+            Assert.Equal(doc.Id, doc2.Id);
+            Assert.NotEqual(doc.Revision, doc2.Revision);
         }
         
-        [Test]
+        [Fact]
         public void Can_load_entity()
         {
             var w = _sx.Load<Widget>(_doc.Id);
-            Assert.AreEqual("gizmo", w.Name);
+            Assert.Equal("gizmo", w.Name);
         }
 
-        [Test]
+        [Fact]
         public void Can_update_loaded_entity()
         {
             var x = _sx.ListDocuments();
@@ -114,21 +113,21 @@ namespace Hammock.Test
             _sx.Save(w);
 
             var y = _sx.ListDocuments();
-            Assert.AreEqual(x.Count, y.Count);
-            Assert.AreNotEqual(
+            Assert.Equal(x.Count, y.Count);
+            Assert.NotEqual(
                 x.First(z => z.Id == _doc.Id).Revision,
                 y.First(z => z.Id == _doc.Id).Revision
             );
         }
 
-        [Test]
+        [Fact]
         public void Cannot_load_entity_with_wrong_generic_argument()
         {
             _sx.Load<Widget>(_doc.Id);
             Assert.Throws<InvalidCastException>(() => _sx.Load<Doodad>(_doc.Id));
         }
 
-        [Test]
+        [Fact]
         public void Session_can_save_design_document()
         {
             var d = new DesignDocument { Language = "javascript" };
@@ -136,7 +135,7 @@ namespace Hammock.Test
             Assert.True(_sx.ListDocuments().Any(x => x.Id == "_design/foo"));
         }
 
-        [Test]
+        [Fact]
         public void Session_can_load_design_document()
         {
             _cx.CreateSession(_sx.Database).Save(
@@ -146,10 +145,10 @@ namespace Hammock.Test
 
             var d = _sx.Load<DesignDocument>("_design/bar");
 
-            Assert.IsNotNull(d);
+            Assert.NotNull(d);
         }
 
-        [Test]
+        [Fact]
         public void Session_can_delete_design_document()
         {
             _cx.CreateSession(_sx.Database).Save(
@@ -160,20 +159,20 @@ namespace Hammock.Test
             var d = _sx.Load<DesignDocument>("_design/baz");
             _sx.Delete(d);
 
-            Assert.IsFalse(_sx.ListDocuments().Any(x => x.Id == "_design/baz"));
+            Assert.False(_sx.ListDocuments().Any(x => x.Id == "_design/baz"));
         }
 
-        [Test]
+        [Fact]
         public void Session_can_be_reset()
         {
             var s = _cx.CreateSession(_sx.Database);
             var w = new Widget {Name = "wingnut"};
             s.Save(w);
             s.Reset();
-            Assert.That(() => s.Delete(w), Throws.InstanceOf<Exception>());
+            Assert.Throws<IndexOutOfRangeException>(() => s.Delete(w));
         }
 
-        [Test]
+        [Fact]
         public void Session_preserves_design_document_when_reset()
         {
             var s = _cx.CreateSession(_sx.Database);
@@ -181,10 +180,10 @@ namespace Hammock.Test
             s.Save(d, "_design/bang");
             s.Reset();
             var e = s.Load<DesignDocument>("_design/bang");
-            Assert.That(e, Is.SameAs(d));
+            Assert.Same(d, e);
         }
 
-        [Test]
+        [Fact]
         public void Session_returns_itself_to_connection_when_all_locks_disposed()
         {
             var s = _cx.CreateSession(_sx.Database);
@@ -194,10 +193,10 @@ namespace Hammock.Test
                 {
                 }
                 var t = _cx.CreateSession(_sx.Database);
-                Assert.That(t, Is.Not.SameAs(s));
+                Assert.NotSame(s, t);
             }
             var u = _cx.CreateSession(_sx.Database);
-            Assert.That(u, Is.SameAs(s));
+            Assert.Same(s, u);
         }
 
         public class DocumentSubclass : Document
@@ -211,7 +210,7 @@ namespace Hammock.Test
             public string Name { get; set; }
         }
 
-        [Test]
+        [Fact]
         public void Session_uses_id_when_saving_document_subclassed_entities()
         {
             // http://code.google.com/p/relax-net/issues/detail?id=7
@@ -219,21 +218,21 @@ namespace Hammock.Test
             var x = new DocumentSubclass() {Name = "foo", Id = "foo-document-subclass"};
             s.Save(x);
             var y = s.Load<DocumentSubclass>("foo-document-subclass");
-            Assert.That(y, Is.SameAs(x));
+            Assert.Same(x, y);
         }
 
-        [Test]
+        [Fact]
         public void Session_fills_id_and_revision_when_saving_document_subclassed_entities()
         {
             // http://code.google.com/p/relax-net/issues/detail?id=7
             var s = _cx.CreateSession(_sx.Database);
             var x = new DocumentSubclass();
             s.Save(x);
-            Assert.That(x.Id, Is.Not.Empty);
-            Assert.That(x.Revision, Is.Not.Empty);
+            Assert.NotEmpty(x.Id);
+            Assert.NotEmpty(x.Revision);
         }
 
-        [Test]
+        [Fact]
         public void Session_fills_id_and_revision_when_loading_document_subclassed_entities()
         {
             // http://code.google.com/p/relax-net/issues/detail?id=7
@@ -244,11 +243,11 @@ namespace Hammock.Test
             var t = _cx.CreateSession(_sx.Database);
             var y = t.Load<DocumentSubclass>(x.Id);
 
-            Assert.That(y.Id, Is.EqualTo(x.Id));
-            Assert.That(y.Revision, Is.EqualTo(x.Revision));
+            Assert.Equal(x.Id, y.Id);
+            Assert.Equal(x.Revision, y.Revision);
         }
 
-        [Test]
+        [Fact]
         public void Session_uses_id_when_saving_ihasdocument_implentations()
         {
             // http://code.google.com/p/relax-net/issues/detail?id=7
@@ -260,21 +259,21 @@ namespace Hammock.Test
             };
             s.Save(x);
             var y = s.Load<IHasDocumentImplementation>("bar-document-subclass");
-            Assert.That(y, Is.SameAs(x));
+            Assert.Same(x, y);
         }
 
-        [Test]
+        [Fact]
         public void Session_fills_document_property_when_saving_entities_that_implement_ihasdocument()
         {
             // http://code.google.com/p/relax-net/issues/detail?id=7
             var s = _cx.CreateSession(_sx.Database);
             var x = new IHasDocumentImplementation();
             s.Save(x);
-            Assert.That(x.Document.Id, Is.Not.Empty);
-            Assert.That(x.Document.Revision, Is.Not.Empty);
+            Assert.NotEmpty(x.Document.Id);
+            Assert.NotEmpty(x.Document.Revision);
         }
 
-        [Test]
+        [Fact]
         public void Session_fills_document_property_when_loading_entities_that_implement_ihasdocument()
         {
             // http://code.google.com/p/relax-net/issues/detail?id=7
@@ -285,8 +284,8 @@ namespace Hammock.Test
             var t = _cx.CreateSession(_sx.Database);
             var y = t.Load<IHasDocumentImplementation>(x.Document.Id);
 
-            Assert.That(y.Document.Id, Is.EqualTo(x.Document.Id));
-            Assert.That(y.Document.Revision, Is.EqualTo(x.Document.Revision));
+            Assert.Equal(x.Document.Id, y.Document.Id);
+            Assert.Equal(x.Document.Revision, y.Document.Revision);
         }
     }
 }

@@ -23,50 +23,49 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
-using NUnit.Framework;
+using Xunit;
 
 namespace Hammock.Test
 {
-    [TestFixture]
+    
     public class InvalidDatabaseNameExceptionTests 
     {
-        [Test]
+        [Fact]
         public void Name_must_not_contain_uppercase()
         {
             Assert.Throws<InvalidDatabaseNameException>(() => 
                 InvalidDatabaseNameException.Validate("asdfASDF"));    
         }       
         
-        [Test]
+        [Fact]
         public void Name_must_not_be_null()
         {
             Assert.Throws<ArgumentNullException>(() => 
                 InvalidDatabaseNameException.Validate(null));    
         }
        
-        [Test]
+        [Fact]
         public void Name_must_not_be_empty()
         {
             Assert.Throws<InvalidDatabaseNameException>(() =>
                 InvalidDatabaseNameException.Validate(string.Empty));    
         }
 
-        [Test]
+        [Fact]
         public void Name_must_not_contain_invalid_symbols()
         {
             Assert.Throws<InvalidDatabaseNameException>(() =>
                 InvalidDatabaseNameException.Validate("asdf!@#$%^&*()"));    
         }
 
-        [Test]
+        [Fact]
         public void Name_must_start_with_alphas()
         {
             Assert.Throws<InvalidDatabaseNameException>(() =>
                 InvalidDatabaseNameException.Validate("1234asdf"));
         }
 
-        [Test]
+        [Fact]
         public void Name_can_contain_valid_symbols()
         {
             InvalidDatabaseNameException.Validate("asdf_$()+-/");

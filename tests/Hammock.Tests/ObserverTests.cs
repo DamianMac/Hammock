@@ -23,11 +23,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NUnit.Framework;
-
+using Xunit;
 namespace Hammock.Test
 {
-    [TestFixture]
+    
     public class ObserverTests
     {
         private Connection _cx;
@@ -37,8 +36,7 @@ namespace Hammock.Test
             public string Name { get; set; }
         }
 
-        [TestFixtureSetUp]
-        public void FixtureSetup()
+        public ObserverTests()
         {
             _cx = ConnectionTests.CreateConnection();
             if (_cx.ListDatabases().Contains("relax-observer-tests"))
@@ -100,7 +98,7 @@ namespace Hammock.Test
             }
         }
 
-        [Test]
+        [Fact]
         public void Session_invokes_observer_before_save()
         {
             var o = new MockObserver();
@@ -108,11 +106,11 @@ namespace Hammock.Test
             sx.Observers.Add(o);
             var w = new Widget();
             sx.Save(w);
-            Assert.That(o.TimesBeforeSaveCalled, Is.EqualTo(1));
-            Assert.That(o.LastEntity, Is.SameAs(w));
+            Assert.Equal(1, o.TimesBeforeSaveCalled);
+            Assert.Same(w, o.LastEntity);
         }
 
-        [Test]
+        [Fact]
         public void Session_invokes_observer_after_save()
         {
             var o = new MockObserver();
@@ -120,10 +118,10 @@ namespace Hammock.Test
             sx.Observers.Add(o);
             var w = new Widget();
             sx.Save(w);
-            Assert.That(o.TimesAfterSaveCalled, Is.EqualTo(1));
+            Assert.Equal(1, o.TimesAfterSaveCalled);
         }
 
-        [Test]
+        [Fact]
         public void Session_invokes_observer_before_delete()
         {
             var o = new MockObserver();
@@ -132,10 +130,10 @@ namespace Hammock.Test
             var w = new Widget();
             sx.Save(w);
             sx.Delete(w);
-            Assert.That(o.TimesBeforeDeleteCalled, Is.EqualTo(1));
+            Assert.Equal(1, o.TimesBeforeDeleteCalled);
         }
 
-        [Test]
+        [Fact]
         public void Session_invokes_observer_after_delete()
         {
             var o = new MockObserver();
@@ -144,10 +142,10 @@ namespace Hammock.Test
             var w = new Widget();
             sx.Save(w);
             sx.Delete(w);
-            Assert.That(o.TimesAfterDeleteCalled, Is.EqualTo(1));
+            Assert.Equal(1, o.TimesAfterDeleteCalled);
         }
 
-        [Test]
+        [Fact]
         public void Session_invokes_observer_after_load()
         {
             var o = new MockObserver();
@@ -157,10 +155,10 @@ namespace Hammock.Test
             var w = new Widget();
             var d = sx1.Save(w);
             var x = sx2.Load<Widget>(d.Id);
-            Assert.That(o.TimesAfterLoadCalled, Is.EqualTo(1));
+            Assert.Equal(1, o.TimesAfterLoadCalled);
         }
 
-        [Test]
+        [Fact]
         public void Session_respects_observer_before_save_disposition()
         {
             var o = new MockObserver();
@@ -169,10 +167,10 @@ namespace Hammock.Test
             sx.Observers.Add(o);
             var w = new Widget();
             Assert.Throws<Exception>(() => sx.Save(w));
-            Assert.That(o.TimesAfterSaveCalled, Is.EqualTo(0));
+            Assert.Equal(0, o.TimesAfterSaveCalled);
         }
 
-        [Test]
+        [Fact]
         public void Session_respects_observer_before_delete_disposition()
         {
             var o = new MockObserver();
@@ -182,16 +180,16 @@ namespace Hammock.Test
             var w = new Widget();
             var d = sx.Save(w);
             Assert.Throws<Exception>(() => sx.Delete(w));
-            Assert.That(o.TimesAfterDeleteCalled, Is.EqualTo(0));
+            Assert.Equal(0, o.TimesAfterDeleteCalled);
         }
 
-        [Test]
+        [Fact]
         public void Connection_fills_session_observers()
         {
             var cx = ConnectionTests.CreateConnection();
             cx.Observers.Add(x => new MockObserver());
             var sx = cx.CreateSession("relax-observer-tests");
-            Assert.That(sx.Observers.Count, Is.EqualTo(1));
+            Assert.Equal(1, sx.Observers.Count);
         }
     }
 }
