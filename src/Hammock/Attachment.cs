@@ -25,7 +25,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Web;
 using Newtonsoft.Json;
 
 namespace RedBranch.Hammock
@@ -102,10 +101,10 @@ namespace RedBranch.Hammock
             }
         }
 
-        public Document AttachFile<TEntity>(TEntity entity, HttpPostedFileBase file) where TEntity : class
-        {
-            return AttachFile(entity, file.FileName, file.ContentType, file.ContentLength, file.InputStream);
-        }
+        // public Document AttachFile<TEntity>(TEntity entity, HttpPostedFileBase file) where TEntity : class
+        // {
+        //     return AttachFile(entity, file.FileName, file.ContentType, file.ContentLength, file.InputStream);
+        // }
 
         public Document AttachFile<TEntity>(TEntity entity, string filename, string contentType, Stream data) where TEntity : class
         {

@@ -39,8 +39,8 @@ namespace RedBranch.Hammock
         IPrimayOperator<TEntity, TKey> Where<TKey>(Expression<Func<TEntity, TKey>> xp);
         Query<TEntity>.Spec All();
 
-        void Attach(TEntity entity, string filename, HttpWebResponse response);
-        void Attach(TEntity entity, HttpPostedFileBase file);
+        // void Attach(TEntity entity, string filename, HttpWebResponse response);
+        // void Attach(TEntity entity, HttpPostedFileBase file);
         void Attach(TEntity entity, string filename, string contentType, Stream data);
         void Attach(TEntity entity, string filename, string contentType, long contentLength, Stream data);
         TEntity TryGet(string id);
@@ -122,14 +122,14 @@ namespace RedBranch.Hammock
             Session.Delete(entity);
         }
 
-        public void Attach(TEntity entity, string filename, HttpWebResponse response)
-        {
-            Session.AttachFile(entity, filename, response);
-        }
-        public void Attach(TEntity entity, HttpPostedFileBase file)
-        {
-            Session.AttachFile(entity, file);
-        }
+        // public void Attach(TEntity entity, string filename, HttpWebResponse response)
+        // {
+        //     Session.AttachFile(entity, filename, response);
+        // }
+        // public void Attach(TEntity entity, HttpPostedFileBase file)
+        // {
+        //     Session.AttachFile(entity, file);
+        // }
 
         public void Attach(TEntity entity, string filename, string contentType, Stream data)
         {
