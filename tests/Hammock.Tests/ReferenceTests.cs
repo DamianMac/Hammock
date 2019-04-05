@@ -23,21 +23,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
 using Xunit;
-
 using Hammock.Design;
 
-namespace Hammock.Test
+namespace Hammock.Tests
 {
     
-    public class ReferenceTests
+    public class ReferenceTests : DatabaseTestFixture
     {
-        private Connection _cx;
-        private Session _sx;
         private Session _sx2;
         
         public class Widget : Document
@@ -68,14 +63,8 @@ namespace Hammock.Test
 
         public ReferenceTests()
         {
-            _cx = ConnectionTests.CreateConnection();
-            if (_cx.ListDatabases().Contains("relax-reference-tests"))
-            {
-                _cx.DeleteDatabase("relax-reference-tests");
-            }
-            _cx.CreateDatabase("relax-reference-tests");
-            _sx = _cx.CreateSession("relax-reference-tests");
-            _sx2 = _cx.CreateSession("relax-reference-tests");
+      
+            _sx2 = _cx.CreateSession(_sx.Database);
 
             _sx.Save(new Widget { Id = "w1", Name = "Widget", Cost = 30 });
             _sx.Save(new Widget { Id = "w2", Name = "Gadget", Cost = 30 });

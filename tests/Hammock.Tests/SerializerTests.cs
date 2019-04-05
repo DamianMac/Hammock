@@ -26,7 +26,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Hammock.Test
+namespace Hammock.Tests
 {
     
     public class SerializerTests

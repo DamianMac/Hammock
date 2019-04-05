@@ -27,13 +27,12 @@ using System.Text;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace Hammock.Test
+namespace Hammock.Tests
 {
-    
-    public class AttachmentTests : IDisposable
+
+    public class AttachmentTests : DatabaseTestFixture
     {
-        private Connection _cx;
-        private Session _sx;
+        
 
         public class Widget : IHasAttachments
         {
@@ -41,22 +40,13 @@ namespace Hammock.Test
             [JsonIgnore] public Attachments Attachments { get; set; }
         }
 
-        public AttachmentTests()
-        {
-            _cx = ConnectionTests.CreateConnection();
-            if (_cx.ListDatabases().Contains("relax-session-tests"))
-            {
-                _cx.DeleteDatabase("relax-session-tests");
-            }
-            _cx.CreateDatabase("relax-session-tests");
-            _sx = _cx.CreateSession("relax-session-tests");
-        }
+       
 
         [Fact]
         public void Session_can_only_save_attachments_to_enrolled_entities()
         {
             var a = "Sessions can save attachments!";
-            var w = new Widget() {Name = "foo"};
+            var w = new Widget() { Name = "foo" };
             Assert.Throws<Exception>(
                 () => _sx.AttachFile(w, "test.txt", "text/plain", new MemoryStream(Encoding.ASCII.GetBytes(a)))
             );
@@ -66,7 +56,7 @@ namespace Hammock.Test
         public void Session_can_save_attachments()
         {
             var a = "Sessions can save attachments!";
-            var w = new Widget() {Name = "foo"};
+            var w = new Widget() { Name = "foo" };
             var d = _sx.Save(w);
             var e = _sx.AttachFile(w, "test.txt", "text/plain", new MemoryStream(Encoding.ASCII.GetBytes(a)));
 
@@ -78,7 +68,7 @@ namespace Hammock.Test
         public void Session_can_list_attachments()
         {
             var a = "Sessions can list attachments!";
-            var w = new Widget() {Name = "foo"};
+            var w = new Widget() { Name = "foo" };
             var d = _sx.Save(w);
             var e = _sx.AttachFile(w, "test.txt", "text/plain", new MemoryStream(Encoding.ASCII.GetBytes(a)));
 
@@ -92,7 +82,7 @@ namespace Hammock.Test
         public void Session_can_delete_attachments()
         {
             var a = "Sessions can list attachments!";
-            var w = new Widget() {Name = "foo"};
+            var w = new Widget() { Name = "foo" };
             var d = _sx.Save(w);
             var e = _sx.AttachFile(w, "test.txt", "text/plain", new MemoryStream(Encoding.ASCII.GetBytes(a)));
             w.Attachments.Clear();
@@ -108,7 +98,7 @@ namespace Hammock.Test
         public void Session_can_load_attachments()
         {
             var a = "Sessions can load attachments!";
-            var w = new Widget() {Name = "foo"};
+            var w = new Widget() { Name = "foo" };
             var d = _sx.Save(w);
             var e = _sx.AttachFile(w, "test.txt", "text/plain", new MemoryStream(Encoding.ASCII.GetBytes(a)));
 
@@ -121,9 +111,6 @@ namespace Hammock.Test
             Assert.Equal(b, a);
         }
 
-        public void Dispose()
-        {
-            _cx.DeleteDatabase("relax-session-tests");
-        }
+
     }
 }

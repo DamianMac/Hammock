@@ -28,9 +28,9 @@ using Newtonsoft.Json.Linq;
 using Xunit;
 using Hammock.Design;
 
-namespace Hammock.Test
+namespace Hammock.Tests
 {
-    public class RepositoryTests
+    public class RepositoryTests : DatabaseTestFixture
     {
         public class Widget
         {
@@ -51,20 +51,12 @@ namespace Hammock.Test
             
         }
 
-        private Connection _cx;
-        private Session _sx;
         private Session _sx2;
 
         public RepositoryTests()
         {
-            _cx = ConnectionTests.CreateConnection();
-            if (_cx.ListDatabases().Contains("relax-repository-tests"))
-            {
-                _cx.DeleteDatabase("relax-repository-tests");
-            }
-            _cx.CreateDatabase("relax-repository-tests");
-            _sx = _cx.CreateSession("relax-repository-tests");
-            _sx2 = _cx.CreateSession("relax-repository-tests");
+            
+            _sx2 = _cx.CreateSession(_sx.Database);
 
             _sx.Save(new Gizmo { Name = "Widget", Cost = 30, Manufacturer = "ACME" });
             _sx.Save(new Gizmo { Name = "Gadget", Cost = 30, Manufacturer = "ACME" });
@@ -74,6 +66,7 @@ namespace Hammock.Test
             _sx.Save(new Gizmo { Name = "Bang",   Cost = 55, Manufacturer = "Widgetco" });
 
         }
+
 
         [Fact]
         public void Can_create_repository()

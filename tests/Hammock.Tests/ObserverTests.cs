@@ -24,27 +24,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Xunit;
-namespace Hammock.Test
+namespace Hammock.Tests
 {
     
-    public class ObserverTests
+    public class ObserverTests : DatabaseTestFixture
     {
-        private Connection _cx;
 
         public class Widget
         {
             public string Name { get; set; }
         }
 
-        public ObserverTests()
-        {
-            _cx = ConnectionTests.CreateConnection();
-            if (_cx.ListDatabases().Contains("relax-observer-tests"))
-            {
-                _cx.DeleteDatabase("relax-observer-tests");
-            }
-            _cx.CreateDatabase("relax-observer-tests");
-        }
 
         public class MockObserver : IObserver
         {

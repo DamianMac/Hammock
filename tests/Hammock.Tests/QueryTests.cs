@@ -25,10 +25,10 @@ using System.Linq;
 using System.Text;
 using Xunit;
 using Hammock.Design;
-namespace Hammock.Test
+namespace Hammock.Tests
 {
     
-    public class QueryTests
+    public class QueryTests : DatabaseTestFixture
     {
         public class Widget
         {
@@ -42,19 +42,9 @@ namespace Hammock.Test
             public Document Document { get; set; }
         }
 
-        private Connection _cx;
-        private Session _sx;
-
         public QueryTests()
         {
-            _cx = ConnectionTests.CreateConnection();
-            if (_cx.ListDatabases().Contains("relax-query-tests"))
-            {
-                _cx.DeleteDatabase("relax-query-tests");
-            }
-            _cx.CreateDatabase("relax-query-tests");
-            _sx = _cx.CreateSession("relax-query-tests");
-        
+      
             // populate a few widgets & a simple design doc
             _sx.Save(new Widget { Name = "widget", Manufacturer = "acme" });
             _sx.Save(new Widget { Name = "sprocket", Manufacturer = "acme" });
@@ -167,7 +157,7 @@ namespace Hammock.Test
         [Fact]
         public void Can_prefetch_document_and_fill_ihasdocument()
         {
-            var s2 = _cx.CreateSession("relax-query-tests");
+            var s2 = _cx.CreateSession(_sx.Database);
             var q = new Query<WidgetWithDocument>(s2, "widgets", "all-widgets");
 
             var r0 = q.Limit(1).WithDocuments().Execute();

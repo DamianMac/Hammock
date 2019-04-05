@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using Xunit;
 
-namespace Hammock.Test
+namespace Hammock.Tests
 {
     
     public class ConnectionTests : IDisposable

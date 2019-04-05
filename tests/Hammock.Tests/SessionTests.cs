@@ -26,15 +26,12 @@ using System.Text;
 using Xunit;
 using Hammock.Design;
 
-namespace Hammock.Test
+namespace Hammock.Tests
 {
     
-    public class SessionTests
+    public class SessionTests : DatabaseTestFixture
     {
-        private Connection _cx;
-        private Session _sx;
-        private Document _doc;
-
+        
         public class Widget
         {
             public string Name { get; set; }
@@ -49,19 +46,13 @@ namespace Hammock.Test
         
         public SessionTests()
         {
-            _cx = ConnectionTests.CreateConnection();
-            if (_cx.ListDatabases().Contains("relax-session-tests"))
-            {
-                _cx.DeleteDatabase("relax-session-tests");
-            }
-            _cx.CreateDatabase("relax-session-tests");
-            _sx = _cx.CreateSession("relax-session-tests");
 
             // create an initial document on a seperate session
             var x = _cx.CreateSession(_sx.Database);
             var w = new Widget {Name = "gizmo", Tags = new[] {"whizbang", "geegollie"}};
             _doc = x.Save(w);
         }
+
 
         [Fact]
         public void Can_list_documents()
