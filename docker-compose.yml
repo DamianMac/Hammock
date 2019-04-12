@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  hammock:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    links:
+      - couchdb_test
+    depends_on:
+      - "couchdb_test"
+  couchdb_test:
+    image: couchdb
+    expose:
+      - "5984"
+    ports:
+      - 5984:5984

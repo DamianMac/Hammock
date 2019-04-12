@@ -1,0 +1,11 @@
+# Use postgres/example user/password credentials
+version: '3.1'
+
+services:
+
+  hammock_test_db:
+    image: couchdb
+    restart: always
+    container_name: hammock_test_couch
+    ports:
+      - 5984:5984
