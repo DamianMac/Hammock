@@ -32,7 +32,8 @@ namespace Hammock.Tests
     {
         public static Connection CreateConnection()
         {
-            return new Connection(new Uri("http://localhost:5984"));
+            const string UriString = "http://couchdb_test:5984";
+            return new Connection(new Uri(UriString));
         }
 
         

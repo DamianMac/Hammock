@@ -93,8 +93,7 @@ namespace Hammock.Tests
             var doc = _sx.Save(w);
             var r = new Repository<Widget>(_sx);
             r.Delete(w);
-
-            Assert.False(_sx.ListDocuments().Any(x => x.Id == doc.Id));
+            Assert.Empty(_sx.ListDocuments().Where(x => x.Id == doc.Id));
         }
 
         [Fact]
@@ -103,8 +102,7 @@ namespace Hammock.Tests
             var w = new Widget { Name = "doodad" };
             var r = new Repository<Widget>(_sx);
             var doc = r.Save(w);
-
-            Assert.True(_sx.ListDocuments().Any(x => x.Id == doc.Id));
+            Assert.NotEmpty(_sx.ListDocuments().Where(x => x.Id == doc.Id));
         }
 
         [Fact]
