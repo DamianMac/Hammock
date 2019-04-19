@@ -1,17 +1,29 @@
 version: "3"
 
 services:
-  hammock:
+  hammock-build:
     build:
       context: .
-      dockerfile: ./Dockerfile
-    links:
-      - couchdb_test
+      dockerfile: ./Dockerfiles/hammock.build.Dockerfile
+      args:
+        - BUILD_NUMBER
+    image: hammock-build:latest
+  hammock-test:
+    build:
+      context: .
+      dockerfile: ./Dockerfiles/hammock.test.Dockerfile
+    image: hammock-test:latest
     depends_on:
-      - "couchdb_test"
-  couchdb_test:
+      - hammock-build
+      - couchdb-test
+  couchdb-test:
     image: couchdb
     expose:
       - "5984"
-    ports:
-      - 5984:5984
+  hammock-publish:
+    build:
+      context: .
+      dockerfile: ./Dockerfiles/hammock.publish.Dockerfile
+      args:
+        - BUILD_NUMBER
+    image: hammock-publish:latest

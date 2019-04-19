@@ -2,8 +2,8 @@
 
 var target = Argument("Target", "Default");  
 var configuration = Argument("Configuration", "Release");
-var version = Argument("buildVersion", "0.0.0.0");
-var nugetApiKey = Argument("nugetApiKey", "");
+var version = EnvironmentVariable("BUILD_NUMBER") ?? Argument("buildVersion", "0.0.0");
+var nugetApiKey = EnvironmentVariable("NUGET_API_KEY") ?? "";
 
 Information($"Running target {target} in configuration {configuration} with version {version}");
 
@@ -79,6 +79,8 @@ Task("BuildPackages")
             Configuration = configuration,
             NoBuild = true,
             OutputDirectory = packageDirectory,
+            ArgumentCustomization = args => args
+                        .Append($"/p:PackageVersion={version}")
         
         };
        DotNetCorePack("./src/Hammock/Hammock.csproj", settings); 
@@ -88,6 +90,12 @@ Task("BuildPackages")
 
 Task("PushPackages")
 	.Does(() => {
+
+        var package = $"./{packageDirectory}/hammock.core.{version}.nupkg";
+        if (! System.IO.File.Exists(package))
+        {
+            Information($"File {package} doesn't exist");
+        }
         if ( !String.IsNullOrEmpty(nugetApiKey))
         {
             var settings = new DotNetCoreNuGetPushSettings
@@ -95,8 +103,12 @@ Task("PushPackages")
                 ApiKey = nugetApiKey,
                 Source = "https://www.nuget.org/api/v2/package"
             };
-            var packageVersion = String.Join(".", version.Split('.').Take(3));
-            DotNetCoreNuGetPush($"{packageDirectory}/hammock.core.{packageVersion}.nupkg", settings);
+            Information($"Pushing package {package}");
+            DotNetCoreNuGetPush($"{package}", settings);
+        }
+        else
+        {
+            Information($"No Nuget keys found. Skipping package {package}");
         }
 	});
 
@@ -118,8 +130,7 @@ Task("CI")
     .IsDependentOn("GenerateVersionFile")
     .IsDependentOn("Build")
     //.IsDependentOn("Test")
-    .IsDependentOn("BuildPackages")
-    .IsDependentOn("PushPackages");
+    .IsDependentOn("BuildPackages");
 
 
 // Executes the task specified in the target argument.

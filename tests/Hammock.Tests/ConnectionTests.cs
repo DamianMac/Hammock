@@ -30,10 +30,16 @@ namespace Hammock.Tests
     
     public class ConnectionTests : IDisposable
     {
+        private static string GetHost()
+        {
+            var server = Environment.GetEnvironmentVariable("HAMMOCK_TEST_DB") ?? "localhost";
+
+            var host = $"http://{server}:5984";
+            return host;
+        }
         public static Connection CreateConnection()
         {
-            const string UriString = "http://couchdb_test:5984";
-            return new Connection(new Uri(UriString));
+            return new Connection(new Uri(GetHost()));
         }
 
         
@@ -55,8 +61,9 @@ namespace Hammock.Tests
         [Fact]
         public void Slashes_in_database_names_must_be_escaped()
         {
+            var databaseAddress = GetHost() + "/forward%2Fslash/";
             Assert.Equal(
-                "http://localhost:5984/forward%2Fslash/",
+                databaseAddress,
                 CreateConnection().GetDatabaseLocation("forward/slash")
             );
         }
