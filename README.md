@@ -6,6 +6,7 @@ Originally written in 2009 for .NET by Nicholas J. Nystrom and published on [Goo
 
 ## Usage
 
-Coming soon, post an issue or get in touch at hello@damianm.com if you're interested in using it or helping out.
+Documentation is in the [Wiki](https://github.com/DamianMac/Hammock/wiki)
+
 
 
