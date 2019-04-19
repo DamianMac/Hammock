@@ -7,6 +7,7 @@ services:
       dockerfile: ./Dockerfiles/hammock.build.Dockerfile
       args:
         - BUILD_NUMBER
+        - NUGET_API_KEY
     image: hammock-build:latest
   hammock-test:
     build:
@@ -26,4 +27,5 @@ services:
       dockerfile: ./Dockerfiles/hammock.publish.Dockerfile
       args:
         - BUILD_NUMBER
+        - NUGET_API_KEY
     image: hammock-publish:latest
