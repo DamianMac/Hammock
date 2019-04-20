@@ -15,7 +15,7 @@ Task("Clean")
     .Does(() =>
     {
         CleanDirectory(packageDirectory);
-        
+        DotNetCoreClean("./");
     });
 
 // Run dotnet restore to restore all package references.
